@@ -4,12 +4,15 @@ from __future__ import annotations
 from multiprocessing import freeze_support
 from datetime import datetime
 import os
+from time import time
 
 if __name__ == "__main__":
     if os.getenv('TDM_DOCKER'):
-      for filename in ['healthcheck.exitstate', 'healthcheck.connectionerror', 'healthcheck.websocketerror']:
+      for filename in ['healthcheck.connectionerror', 'healthcheck.websocketerror']:
         with open(f'/tmp/{filename}', 'w') as f:
           f.write('Container is Healthy')
+      with open('/tmp/healthcheck.heartbeat', 'w') as f:
+        f.write(str(int(time())))
 
     print(f"{datetime.now().strftime('%Y-%m-%d %X')}: Starting: Twitch Drops Miner")
     freeze_support()
@@ -169,9 +172,6 @@ if __name__ == "__main__":
             client.prevent_close()
             client.print("Fatal error encountered:\n")
             client.print(traceback.format_exc())
-            if os.getenv('TDM_DOCKER'):
-                  with open('/tmp/healthcheck.exitstate', 'w') as f:
-                    f.write('Container is Unhealthy')
         finally:
             if sys.platform == "linux":
                 loop.remove_signal_handler(signal.SIGINT)

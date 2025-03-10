@@ -450,6 +450,8 @@ class Twitch:
         self.websocket = WebsocketPool(self)
         # Maintenance task
         self._mnt_task: asyncio.Task[None] | None = None
+        # Heartbeat task
+        self._heartbeat_task: asyncio.Task[None] | None = None
 
     async def get_session(self) -> aiohttp.ClientSession:
         if (session := self._session) is not None:
@@ -495,6 +497,9 @@ class Twitch:
         if self._mnt_task is not None:
             self._mnt_task.cancel()
             self._mnt_task = None
+        if self._heartbeat_task is not None:
+            self._heartbeat_task.cancel()
+            self._heartbeat_task = None
         # stop websocket, close session and save cookies
         await self.websocket.stop(clear_topics=True)
         if self._session is not None:
@@ -585,6 +590,11 @@ class Twitch:
             with open(DUMP_PATH, 'w', encoding="utf8"):
                 # replace the existing file with an empty one
                 pass
+
+        # Start heartbeat task for Docker health checks
+        if os.getenv('TDM_DOCKER'):
+            self._heartbeat_task = asyncio.create_task(self._heartbeat_task())
+
         while True:
             try:
                 await self._run()
@@ -1693,3 +1703,27 @@ class Twitch:
                 continue
             available_drops: list[JsonType] = acl_available_drops_map[channel_id]
             channel.external_update(channel_data, available_drops)
+
+    async def _heartbeat_task(self):
+        """
+        Periodically updates a heartbeat file with the current timestamp
+        to indicate the application is running properly.
+        """
+        logger.info("Starting heartbeat task")
+        while True:
+            try:
+                # Write current UNIX timestamp to heartbeat file
+                if os.getenv('TDM_DOCKER'):
+                    with open('/tmp/healthcheck.heartbeat', 'w') as f:
+                        f.write(str(int(time())))
+
+                # Sleep for 60 seconds before next heartbeat
+                await asyncio.sleep(60)
+
+                # Exit if app is closing
+                if self.gui.close_requested:
+                    break
+
+            except Exception:
+                logger.exception("Error in heartbeat task")
+                await asyncio.sleep(10)  # Sleep on error to avoid tight loop
