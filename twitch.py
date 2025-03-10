@@ -593,7 +593,7 @@ class Twitch:
 
         # Start heartbeat task for Docker health checks
         if os.getenv('TDM_DOCKER'):
-            self._heartbeat_task = asyncio.create_task(self._heartbeat_task())
+            self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
         while True:
             try:
@@ -1704,7 +1704,7 @@ class Twitch:
             available_drops: list[JsonType] = acl_available_drops_map[channel_id]
             channel.external_update(channel_data, available_drops)
 
-    async def _heartbeat_task(self):
+    async def _heartbeat_loop(self):
         """
         Periodically updates a heartbeat file with the current timestamp
         to indicate the application is running properly.
