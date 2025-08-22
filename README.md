@@ -243,7 +243,9 @@ Non-translations related credits should be added to the first section instead.
 | @ShimadaNanaki         | Japanese ( 日本語 )                                                      |
 | @Patriot99             | Polish ( Polski ) translation and revisions (co-authored with @DevilXD) |
 | @zarigata              | Portuguese ( Português )                                                |
-| @Sergo1217             | Russian ( Русский )                                                      |
+| @Sergo1217             | Russian ( Русский )                                                     |
+| @kilroy98              | Russian (Русский) translation corrections and revisions                 |
 | @Shofuu                | Spanish ( Español ) translation and revisions                           |
 | @alikdb                | Turkish ( Türkçe )                                                      |
-| @Nollasko              | Ukrainian ( Українська ) translation and revisions                       |
+| @Nollasko              | Ukrainian ( Українська ) translation and revisions                      |
+| @kilroy98              | Ukrainian (Українська) translation corrections and revisions            |
