@@ -64,7 +64,7 @@ class BaseDrop:
         self.id: str = data["id"]
         self.name: str = data["name"]
         self.campaign: DropsCampaign = campaign
-        self.benefits: list[Benefit] = [Benefit(b) for b in data["benefitEdges"]]
+        self.benefits: list[Benefit] = [Benefit(b) for b in (data["benefitEdges"] or [])]
         self.starts_at: datetime = timestamp(data["startAt"])
         self.ends_at: datetime = timestamp(data["endAt"])
         self.claim_id: str | None = None
@@ -90,7 +90,7 @@ class BaseDrop:
             and all( (self.starts_at <= dt < self.ends_at) | (dt == bugged_time) for dt in dts)
         ):
             self.is_claimed = True
-        self._precondition_drops: list[str] = [d["id"] for d in (data["preconditionDrops"] or [])]
+        self.precondition_drops: list[str] = [d["id"] for d in (data["preconditionDrops"] or [])]
 
     def __repr__(self) -> str:
         if self.is_claimed:
@@ -104,13 +104,15 @@ class BaseDrop:
     @cached_property
     def preconditions_met(self) -> bool:
         campaign = self.campaign
-        return all(campaign.timed_drops[pid].is_claimed for pid in self._precondition_drops)
+        return all(campaign.timed_drops[pid].is_claimed for pid in self.precondition_drops)
 
     def _base_earn_conditions(self) -> bool:
         # define when a drop can be earned or not
         return (
             self.preconditions_met  # preconditions are met
             and not self.is_claimed  # isn't already claimed
+            # has at least one benefit, or participates in a preconditions chain
+            and (bool(self.benefits) or self.id in self.campaign.preconditions_chain())
         )
 
     def _base_can_earn(self) -> bool:
@@ -248,7 +250,7 @@ class TimedDrop(BaseDrop):
         return self.required_minutes + max(
             (
                 self.campaign.timed_drops[pid].total_required_minutes
-                for pid in self._precondition_drops
+                for pid in self.precondition_drops
             ),
             default=0,
         )
@@ -258,7 +260,7 @@ class TimedDrop(BaseDrop):
         return self.remaining_minutes + max(
             (
                 self.campaign.timed_drops[pid].total_remaining_minutes
-                for pid in self._precondition_drops
+                for pid in self.precondition_drops
             ),
             default=0,
         )
@@ -416,6 +418,13 @@ class DropsCampaign:
     @property
     def availability(self) -> float:
         return min(d.availability for d in self.drops)
+
+    def preconditions_chain(self) -> set[str]:
+        return set(
+            chain.from_iterable(
+                drop.precondition_drops for drop in self.drops if not drop.is_claimed
+            )
+        )
 
     def _on_claim(self) -> None:
         invalidate_cache(self, "finished", "claimed_drops", "remaining_drops")
