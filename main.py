@@ -2,9 +2,11 @@ from __future__ import annotations
 
 # import an additional thing for proper PyInstaller freeze support
 from multiprocessing import freeze_support
+
 from datetime import datetime
 import os
 from time import time
+import pystray
 
 if __name__ == "__main__":
     if os.getenv('TDM_DOCKER'):
@@ -186,7 +188,8 @@ if __name__ == "__main__":
             await client.shutdown()
         if not client.gui.close_requested:
             # user didn't request the closure
-            client.gui.tray.change_icon("error")
+            if pystray.Icon.HAS_MENU:
+                client.gui.tray.change_icon("error")
             client.print(_("status", "terminated"))
             client.gui.status.update(_("gui", "status", "terminated"))
             # notify the user about the closure

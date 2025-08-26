@@ -2092,7 +2092,8 @@ class GUIManager:
         # Notebook
         self.tabs = Notebook(self, root_frame)
         # Tray icon - place after notebook so it draws on top of the tabs space
-        self.tray = TrayIcon(self, root_frame)
+        if pystray.Icon.HAS_MENU:
+            self.tray = TrayIcon(self, root_frame)
         # Main tab
         main_frame = ttk.Frame(root_frame, padding=8)
         self.tabs.add_tab(main_frame, name=_("gui", "tabs", "main"))
@@ -2150,8 +2151,9 @@ class GUIManager:
             root.protocol("WM_DESTROY_WINDOW", self.close)
         # stay hidden in tray if needed, otherwise show the window when everything's ready
         if self._twitch.settings.tray:
-            # NOTE: this starts the tray icon thread
-            self._root.after_idle(self.tray.minimize)
+            if pystray.Icon.HAS_MENU:
+                # NOTE: this starts the tray icon thread
+                self._root.after_idle(self.tray.minimize)
         else:
             self._root.after_idle(self._root.deiconify)
 
@@ -2254,7 +2256,8 @@ class GUIManager:
         """
         Closes the window. Invalidates the logger.
         """
-        self.tray.stop()
+        if pystray.Icon.HAS_MENU:
+            self.tray.stop()
         logging.getLogger("TwitchDrops").removeHandler(self._handler)
         self._root.destroy()
 
@@ -2269,7 +2272,8 @@ class GUIManager:
         self._cache.save(force=force)
 
     def grab_attention(self, *, sound: bool = True):
-        self.tray.restore()
+        if pystray.Icon.HAS_MENU:
+            self.tray.restore()
         self._root.focus_set()
         if sound:
             self._root.bell()
@@ -2282,11 +2286,13 @@ class GUIManager:
     ) -> None:
         self.progress.display(drop, countdown=countdown, subone=subone)  # main tab
         # inventory overview is updated from within drops themselves via change events
-        self.tray.update_title(drop)  # tray
+        if pystray.Icon.HAS_MENU:
+            self.tray.update_title(drop)  # tray
 
     def clear_drop(self):
         self.progress.display(None)
-        self.tray.update_title(None)
+        if pystray.Icon.HAS_MENU:
+            self.tray.update_title(None)
 
     def print(self, message: str):
         print(f"{datetime.now().strftime('%Y-%m-%d %X')}: {message}")
@@ -2506,7 +2512,8 @@ if __name__ == "__main__":
             f"{campaign.game.name}\n"
             f"{drop.rewards_text()} ({campaign.claimed_drops}/{campaign.total_drops})"
         )
-        gui.tray.notify(claim_text, "Mined Drop")
+        if pystray.Icon.HAS_MENU:
+            gui.tray.notify(claim_text, "Mined Drop")
 
         # Drop progress
         gui.display_drop(drop, countdown=False)
