@@ -111,7 +111,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    upx=True,
+    upx=False,
     debug=False,
     strip=False,
     console=False,
