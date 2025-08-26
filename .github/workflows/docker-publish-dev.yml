@@ -1,0 +1,18 @@
+name: Docker Publish Dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+permissions:
+  packages: write
+
+jobs:
+  call-reusable-workflow:
+    uses: JourneyDocker/github-workflows/.github/workflows/docker-publish.yml@main
+    with:
+      tag: dev
+      platforms: linux/amd64
+    secrets: inherit
