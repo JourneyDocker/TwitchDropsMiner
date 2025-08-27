@@ -135,6 +135,7 @@
                 "tray": "Automatisk start i systembakken: ",
                 "tray_notifications": "Bakkemeddelelser: ",
                 "priority_only": "Kun prioritet: ",
+                "dark_mode": "Mørk tilstand: ",
                 "unlinked_campaigns": "Tillad ikke-linkede kampagner: ",
                 "proxy": "Proxy (kræver genstart):"
             },

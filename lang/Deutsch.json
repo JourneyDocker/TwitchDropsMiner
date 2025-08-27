@@ -134,6 +134,7 @@
                 "autostart": "Autostart: ",
                 "tray": "Autostart ins System Tray: ",
                 "priority_only": "Nur Priorität: ",
+                "dark_mode": "Dunkler Modus: ",
                 "unlinked_campaigns": "Nicht verknüpfte Kampagnen zulassen: ",
                 "proxy": "Proxy (Erfordert Neustart):"
             },

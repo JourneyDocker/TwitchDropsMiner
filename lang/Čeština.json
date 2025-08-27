@@ -127,6 +127,7 @@
                 "autostart": "Automatické spuštění: ",
                 "tray": "Automaticky spusti minimalizovaně: ",
                 "priority_only": "Pouze prioritní: ",
+                "dark_mode": "Tmavý režim: ",
                 "unlinked_campaigns": "Povolit nepřipojené kampaně: ",
                 "proxy": "Proxy:"
             },

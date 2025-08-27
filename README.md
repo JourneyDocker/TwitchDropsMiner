@@ -227,6 +227,7 @@ Non-translations related credits should be added to the first section instead.
 | **Contributor**        | **Translation**                                                         |
 |------------------------|-------------------------------------------------------------------------|
 | @guihkx                | CI script, CI maintenance, Linux builds                                 |
+| @kWAYTV                | Implementation of the dark mode theme                                   |
 | @Bamboozul             | Arabic ( العربية )                                                      |
 | @Suz1e                 | Chinese ( 简体中文 ) translation and revisions                           |
 | @wwj010                | Chinese ( 简体中文 ) translation corrections and revisions               |

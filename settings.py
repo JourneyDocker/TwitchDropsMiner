@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class SettingsFile(TypedDict):
     proxy: URL
     language: str
+    dark_mode: bool
     exclude: set[str]
     priority: list[str]
     unlinked_campaigns: bool
@@ -28,6 +29,7 @@ default_settings: SettingsFile = {
     "proxy": URL(),
     "priority": [],
     "exclude": set(),
+    "dark_mode": False,
     "unlinked_campaigns": False,
     "autostart_tray": False,
     "connection_quality": 1,
@@ -49,6 +51,7 @@ class Settings:
     # from settings file
     proxy: URL
     language: str
+    dark_mode: bool
     exclude: set[str]
     priority: list[str]
     unlinked_campaigns: bool
