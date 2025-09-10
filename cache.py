@@ -32,16 +32,6 @@ class ExpiringHash(TypedDict):
 Hashes = Dict[URLType, ExpiringHash]
 default_database: Hashes = {}
 
-class CurrentSeconds:
-    LIFETIME = timedelta(days=7)
-
-    def set_current_seconds(value):
-        global current_seconds
-        current_seconds = value
-
-    def get_current_seconds():
-        return current_seconds
-
 class ImageCache:
     LIFETIME = timedelta(days=7)
 

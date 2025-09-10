@@ -17,7 +17,6 @@ import aiohttp
 import pystray
 from yarl import URL
 
-from cache import CurrentSeconds
 from translate import _
 from gui import GUIManager
 from channel import Channel

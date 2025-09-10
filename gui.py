@@ -12,7 +12,6 @@ from collections import abc
 from textwrap import dedent
 from math import log10, ceil
 from dataclasses import dataclass
-from time import time
 from tkinter.font import Font, nametofont
 from functools import partial, cached_property
 from datetime import datetime, timedelta, timezone
@@ -29,9 +28,8 @@ if sys.platform == "win32":
     import win32con
     import win32gui
 
-from cache import CurrentSeconds
-from translate import _
 from cache import ImageCache
+from translate import _
 from exceptions import MinerException, ExitRequest
 from utils import resource_path, set_root_icon, webopen, Game, _T
 from constants import (
@@ -715,7 +713,6 @@ class CampaignProgress:
         drop_vars: _DropVars = self._vars["drop"]
         campaign_vars: _CampaignVars = self._vars["campaign"]
         dseconds = self._seconds % 60
-        CurrentSeconds.set_current_seconds(dseconds)
         hours, minutes = self._divmod(drop_minutes)
         drop_vars["remaining"].set(
             _("gui", "progress", "remaining").format(time=f"{hours:>2}:{minutes:02}:{dseconds:02}")
