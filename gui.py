@@ -889,11 +889,11 @@ class ChannelList:
             ],
         )
         self._add_column("game", _("gui", "channels", "headings", "game"), width=50)
-        self._add_column("drops", "🎁", width_template="✔")
+        self._add_column("drops", "🎁", width_template=" 🎁 ")
         self._add_column(
             "viewers", _("gui", "channels", "headings", "viewers"), width_template="1234567"
         )
-        self._add_column("acl_base", "📋", width_template="✔")
+        self._add_column("acl_base", "📋", width_template=" 📋 ")
         self._channel_map: dict[str, Channel] = {}
 
     def _add_column(
