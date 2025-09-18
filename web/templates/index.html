@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Twitch Drops Miner - Web Interface</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    <!-- Fonts and icons -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,700,800" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css"/>    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Dark Mode CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
+    <!-- Application Mode CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mode-styles.css') }}">
+    <!-- Toggle Switch CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toggle-switch.css') }}">
+
+    <!-- Authentication Utilities -->
+    <script src="{{ url_for('static', filename='js/auth_utils.js') }}"></script>
+      <style>
+        /* Progress bar styles - Portainer style */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #3B82F6; /* Tailwind blue-500 */
+            transition: width 0.4s ease;
+        }
+
+        .progress-container.visible {
+            opacity: 1;
+        }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* When data is loading, slightly dim the UI */
+        body.loading-data .card-container {
+            opacity: 0.7;
+        }
+          /* Auth modal styles */
+        #auth-modal {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        #auth-modal.opacity-100 {
+            opacity: 1;
+        }
+
+        /* Code display style */
+        .code-block {
+            font-family: monospace;
+            letter-spacing: 2px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border: 2px solid #6b46c1;
+            border-radius: 6px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            color: #6b46c1;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">    <div id="progress-container" class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <nav id="header" class="bg-purple-900 fixed w-full z-10 top-0 shadow">
+        <div class="w-full container mx-auto flex flex-wrap items-center mt-0 pt-2 pb-2">            <div class="w-1/2 pl-2 md:pl-0">
+                <a class="text-white text-base xl:text-xl no-underline hover:no-underline font-bold" href="#">
+                    <i class="fas fa-gem text-purple-300 pr-3"></i> Twitch Drops Miner
+                </a>
+            </div>            <div class="w-1/2 pr-0">
+                <div class="header-controls">
+                    <!-- Admin status - show current logged in admin user -->
+                    <div class="relative text-sm text-green-300 px-2 pt-1">
+                        <i class="fas fa-user-shield mr-1"></i><span>Admin: {{ username }}</span>
+                    </div>
+
+                    <!-- Admin logout button -->
+                    <button id="local-logout-btn" class="text-red-300 hover:text-red-100 px-2 pt-1" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                      <!-- User status - Twitch connection status -->
+                    <div class="relative text-sm text-white px-2 pt-1" id="user-status">
+                        <i class="fab fa-twitch mr-1"></i><span>Not connected</span>
+                    </div>
+
+                    <!-- Last refreshed -->
+                    <div class="relative text-sm text-blue-300 px-2 pt-1" id="last-refreshed">
+                        <i class="fas fa-clock mr-1"></i><span>Last refreshed: --</span>
+                    </div>
+
+                    <!-- Control buttons group -->
+                    <div class="header-group">
+                        <!-- Theme toggle switch -->
+                        <div class="theme-switch-wrapper toggle-tooltip" data-tooltip="Toggle dark mode">
+                            <label class="switch mx-1">
+                                <input type="checkbox" id="theme-toggle-checkbox">
+                                <span class="slider">
+                                    <i class="fas fa-sun icon-light"></i>
+                                    <i class="fas fa-moon icon-dark"></i>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Mode switch button -->
+                        <button id="mode-switch-btn" class="header-button" title="Switch application mode">
+                            <i class="fas fa-layer-group"></i><span>Mode</span>
+                        </button>
+
+                        <!-- Refresh button -->
+                        <button id="manual-refresh" class="header-button" title="Manually refresh all data">
+                            <i class="fas fa-sync"></i><span>Refresh</span>
+                        </button>
+                    </div>                </div>
+            </div>
+        </div>
+    </nav>    <!-- Container -->
+    <div class="container w-full mx-auto pt-20">
+        <div class="w-full px-4 md:px-0 md:mt-8 mb-16 text-gray-800 leading-normal">
+
+            <!-- Login Notice -->
+            <div id="login-warning-notice" class="w-full p-3 mb-6 hidden">
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded dark:bg-yellow-900 dark:border-yellow-600 dark:text-yellow-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 dark:text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm">
+                                <strong>Important:</strong> You will need to login through the normal GUI one time to get your cookies.jar file before using the web interface.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+              <!-- Mining Status -->
+            <div class="flex flex-wrap card-container position-relative">
+                <div class="w-full md:w-1/2 xl:w-1/3 p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="flex flex-row items-center">
+                            <div class="flex-shrink pr-4">
+                                <div class="rounded p-3 bg-purple-600" id="status-color"><i class="fas fa-gem fa-2x fa-fw fa-inverse"></i></div>
+                            </div>
+                            <div class="flex-1 text-right md:text-center">
+                                <h5 class="font-bold uppercase text-gray-500">Status</h5>
+                                <h3 class="font-bold text-lg" id="mining-status">Loading...</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-1/2 xl:w-1/3 p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="flex flex-row items-center">
+                            <div class="flex-shrink pr-4">
+                                <div class="rounded p-3 bg-blue-600"><i class="fas fa-tv fa-2x fa-fw fa-inverse"></i></div>
+                            </div>
+                            <div class="flex-1 text-right md:text-center">
+                                <h5 class="font-bold uppercase text-gray-500">Current Channel</h5>
+                                <h3 class="font-bold text-lg" id="current-channel">Loading...</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-1/2 xl:w-1/3 p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="flex flex-row items-center">
+                            <div class="flex-shrink pr-4">
+                                <div class="rounded p-3 bg-pink-600"><i class="fas fa-gamepad fa-2x fa-fw fa-inverse"></i></div>
+                            </div>
+                            <div class="flex-1 text-right md:text-center">
+                                <h5 class="font-bold uppercase text-gray-500">Current Game</h5>
+                                <h3 class="font-bold text-lg" id="current-game">Loading...</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drop Progress -->
+            <div class="flex flex-wrap">
+                <div class="w-full md:w-1/2 xl:w-full p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="flex flex-row items-center">                            <div class="flex-shrink pr-4">
+                                <div id="drop-image-container" class="rounded bg-green-600 flex items-center justify-center" style="width: 64px; height: 64px;">
+                                    <!-- The drop image will be loaded here by JavaScript -->
+                                    <i id="drop-image-fallback" class="fas fa-gift fa-3x fa-fw fa-inverse"></i>
+                                    <img id="drop-image" class="w-full h-full object-cover rounded hidden" alt="Drop image">
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h5 class="font-bold uppercase text-gray-500">Current Drop</h5>                                <h3 class="font-bold text-lg" id="current-drop">Loading...</h3>
+                                <div class="pt-1" id="drop-progress-container">
+                                    <div class="shadow w-full bg-gray-200 rounded">
+                                        <div class="bg-purple-600 text-xs leading-none py-1 text-center text-white rounded" id="drop-progress-bar" style="width: 0%">0%</div>
+                                    </div>                                    <div class="text-sm mt-1 text-gray-600" id="drop-progress-text"></div>
+                                    <div class="text-sm mt-1 text-gray-900 font-medium dark:text-gray-900" id="time-remaining"></div>
+
+                                    <!-- Advanced mode information -->
+                                    <div class="drop-advanced-info mt-3 text-xs border-t border-gray-200 pt-2">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Data Source:</span>
+                                            <span class="text-gray-800" id="drop-data-source">Unknown</span>
+                                        </div>
+                                        <div class="flex justify-between mt-1">
+                                            <span class="text-gray-600">Drop ID:</span>
+                                            <span class="text-gray-800" id="drop-id">--</span>
+                                        </div>
+                                        <div class="flex justify-between mt-1">
+                                            <span class="text-gray-600">Raw Progress:</span>
+                                            <span class="text-gray-800" id="drop-raw-progress">--</span>
+                                        </div>
+                                        <div class="flex justify-between mt-1">
+                                            <span class="text-gray-600">Last Update:</span>
+                                            <span class="text-gray-800" id="drop-last-update">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mining Status -->
+            <div class="flex flex-wrap">
+                <div class="w-full md:w-1/2 xl:w-full p-3">
+                    <div class="bg-white border rounded shadow p-4 mb-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-600 rounded mr-4">
+                                    <i class="fas fa-stethoscope fa-2x fa-inverse"></i>
+                                </div>                                <div>
+                                    <h5 class="font-bold uppercase text-gray-500">Diagnostics</h5>
+                                    <h3 class="font-bold text-xl text-gray-800">System Status</h3>
+                                </div>
+                            </div>
+                            <button id="fetch-diagnostics" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+                                <i class="fas fa-sync mr-1"></i> Check Status
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"><div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600">App Version:</div>
+                                <div class="text-gray-800" id="app-version">Unknown</div>
+                                <div class="diagnostics-extra-info mt-2 text-xs border-t pt-2">
+                                    <div class="text-gray-600">Build: <span class="text-gray-800" id="build-info">--</span></div>
+                                    <div class="text-gray-600">Platform: <span class="text-gray-800" id="platform-info">--</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600">Connection Status:</div>
+                                <div id="connection-detail" class="text-gray-800 flex items-center">
+                                    <span class="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
+                                    Checking...
+                                </div>
+                                <div class="diagnostics-extra-info mt-2 text-xs border-t pt-2">
+                                    <div class="text-gray-600">Ping: <span class="text-gray-800" id="connection-ping">--</span></div>
+                                    <div class="text-gray-600">Last Error: <span class="text-gray-800" id="last-error">None</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600">Websocket Status:</div>
+                                <div id="websocket-status" class="text-gray-800 flex items-center">
+                                    <span class="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
+                                    Checking...
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600">Login Status:</div>
+                                <div id="login-status" class="text-gray-800 flex items-center">
+                                    <span class="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
+                                    Checking...
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600">Stats:</div>
+                                <div class="text-gray-800 text-sm">
+                                    <div>Campaigns: <span id="campaigns-count">0</span></div>
+                                    <div>Channels: <span id="channels-count">0</span></div>
+                                    <div>Active Drops: <span id="drops-count">0</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <div class="font-bold text-gray-600 mb-1">Actions:</div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button id="refresh-inventory" class="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded">
+                                        <i class="fas fa-sync mr-1"></i> Refresh Inventory
+                                    </button>
+                                    <button id="reload-tdm" class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                                        <i class="fas fa-plug mr-1"></i> Reload
+                                    </button>
+                                    <button id="switch-channel" class="bg-purple-500 hover:bg-purple-600 text-white text-xs px-2 py-1 rounded">
+                                        <i class="fas fa-exchange-alt mr-1"></i> Switch Channel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex flex-wrap mt-4">
+                <div class="w-full p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="border-b border-gray-200">                            <nav class="flex">
+                                <button class="tab-button py-2 px-4 text-center border-b-2 font-medium text-sm leading-5 border-purple-600 text-purple-600" id="tab-btn-channels">
+                                    Channels
+                                </button>
+                                <button class="tab-button py-2 px-4 text-center border-b-2 font-medium text-sm leading-5 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" id="tab-btn-campaigns">
+                                    Campaigns
+                                </button>                                <button class="tab-button py-2 px-4 text-center border-b-2 font-medium text-sm leading-5 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" id="tab-btn-inventory">
+                                    Inventory
+                                </button>
+                                <!-- <button class="tab-button py-2 px-4 text-center border-b-2 font-medium text-sm leading-5 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" id="tab-btn-login">
+                                    Login
+                                </button> -->
+                                <button class="tab-button py-2 px-4 text-center border-b-2 font-medium text-sm leading-5 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" id="tab-btn-settings">
+                                    Settings
+                                </button>
+                            </nav>
+                        </div>
+                        <div class="p-3" id="tab-content">
+                            <!-- Tab content will be loaded here dynamically -->
+                            <div id="channels-tab" class="tab-panel">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h2 class="text-lg font-semibold">Available Channels</h2>
+                                    <input type="text" id="channel-search" placeholder="Search channels..." class="px-3 py-1 border rounded">
+                                </div>                                <div id="channels-list" class="max-h-96 overflow-y-auto">                                    <table class="min-w-full bg-white">                                        <thead>
+                                            <tr>
+                                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider w-2/5">Channel</th>
+                                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider w-1/5">Game</th>
+                                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-right text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider w-1/5">Viewers</th>
+                                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-right text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider w-1/5">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="channels-table-body">
+                                            <!-- Channels will be loaded here dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                <div id="campaigns-tab" class="tab-panel hidden">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h2 class="text-lg font-semibold">All Campaigns</h2>
+                                    <div id="campaign-filters" class="flex items-center space-x-4">
+                                        <div class="flex items-center space-x-1">
+                                            <input type="checkbox" id="filter-not-linked" class="campaign-filter" checked>
+                                            <label for="filter-not-linked" class="text-sm">Not linked</label>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="checkbox" id="filter-upcoming" class="campaign-filter" checked>
+                                            <label for="filter-upcoming" class="text-sm">Upcoming</label>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="checkbox" id="filter-expired" class="campaign-filter">
+                                            <label for="filter-expired" class="text-sm">Expired</label>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="checkbox" id="filter-excluded" class="campaign-filter">
+                                            <label for="filter-excluded" class="text-sm">Excluded</label>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="checkbox" id="filter-finished" class="campaign-filter">
+                                            <label for="filter-finished" class="text-sm">Finished</label>
+                                        </div>
+                                        <button id="refresh-campaigns" class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 rounded">
+                                            <i class="fas fa-sync mr-1"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="max-h-screen overflow-y-auto">
+                                    <div id="campaigns-list" class="flex flex-col gap-4">
+                                        <!-- Campaigns will be loaded here dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="inventory-tab" class="tab-panel hidden">
+                                <div class="flex flex-col md:flex-row">                                    <div class="w-full md:w-1/2 p-2">
+                                        <h2 class="text-lg font-semibold mb-2">Pending Drops</h2>
+                                        <div id="pending-drops" class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                                            <!-- Pending drops will be loaded here dynamically -->
+                                        </div>
+                                    </div>
+                                    <div class="w-full md:w-1/2 p-2">
+                                        <h2 class="text-lg font-semibold mb-2">Claimed Drops</h2>
+                                        <div id="claimed-drops" class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                                            <!-- Claimed drops will be loaded here dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>                            <div id="settings-tab" class="tab-panel hidden">
+                                <h2 class="text-lg font-semibold mb-4">Settings</h2>
+
+                                <!-- General Settings Section -->
+                                <div class="bg-white shadow overflow-hidden rounded-md mb-6">
+                                    <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900">General Settings</h3>
+                                    </div>
+                                    <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <!-- Language Setting -->
+                                            <div style="display: none;">
+                                                <label for="language-select" class="block text-sm font-medium text-gray-700">Language 🌐 (requires restart)</label>
+                                                <select id="language-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                    <!-- Will be populated dynamically -->
+                                                </select>
+                                            </div>
+
+                                            <!-- Connection Quality Setting -->
+                                            <div style="display: none;">
+                                                <label for="connection-quality" class="block text-sm font-medium text-gray-700">Connection Quality</label>
+                                                <select id="connection-quality" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                    <option value="1">1 (Fastest)</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                    <option value="6">6 (Most reliable)</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Proxy Setting -->
+                                            <div>
+                                                <label for="proxy-input" class="block text-sm font-medium text-gray-700">Proxy URL</label>
+                                                <input type="text" id="proxy-input" placeholder="http://username:password@address:port" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                            </div>
+
+                                            <!-- Checkboxes -->
+                                            <div>
+                                                <div class="space-y-4">
+                                                    <div class="flex items-start" style="display: none;">
+                                                        <div class="flex items-center h-5">
+                                                            <input id="autostart-checkbox" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                        </div>
+                                                        <div class="ml-3 text-sm">
+                                                            <label for="autostart-checkbox" class="font-medium text-gray-700">Auto-start on system startup</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start" style="display: none;">
+                                                        <div class="flex items-center h-5">
+                                                            <input id="start-tray-checkbox" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                        </div>
+                                                        <div class="ml-3 text-sm">
+                                                            <label for="start-tray-checkbox" class="font-medium text-gray-700">Start minimized to tray</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start" style="display: none;">
+                                                        <div class="flex items-center h-5">
+                                                            <input id="tray-notifications-checkbox" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                        </div>
+                                                        <div class="ml-3 text-sm">
+                                                            <label for="tray-notifications-checkbox" class="font-medium text-gray-700">Show tray notifications</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start" style="display: none;">
+                                                        <div class="flex items-center h-5">
+                                                            <input id="dark-mode-checkbox" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                        </div>
+                                                        <div class="ml-3 text-sm">
+                                                            <label for="dark-mode-checkbox" class="font-medium text-gray-700">Enable dark mode</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start">
+                                                        <div class="flex items-center h-5">
+                                                            <input id="unlinked-campaigns-checkbox" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                        </div>
+                                                        <div class="ml-3 text-sm">
+                                                            <label for="unlinked-campaigns-checkbox" class="font-medium text-gray-700">Allow unlinked campaigns</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Priority Settings Section -->
+                                <div class="bg-white shadow overflow-hidden rounded-md mb-6">
+                                    <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900">Priority Settings</h3>
+                                    </div>
+                                    <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                                        <!-- Priority Mode -->
+                                        <div class="mb-4">
+                                            <label for="priority-mode" class="block text-sm font-medium text-gray-700">Priority Mode</label>
+                                            <select id="priority-mode" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                <option value="PRIORITY_ONLY">Priority Only</option>
+                                                <option value="ENDING_SOONEST">Ending Soonest</option>
+                                                <option value="LOW_AVBL_FIRST">Low Availability First</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Priority List -->
+                                        <div class="mb-6">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <h4 class="text-sm font-medium text-gray-700">Priority List</h4>
+                                                <div class="flex space-x-2">
+                                                    <div class="relative flex items-center">
+                                                        <select id="game-select-priority" class="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                            <!-- Will be populated dynamically -->
+                                                        </select>
+                                                        <button id="add-priority-game" class="ml-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                            Add
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border rounded-md overflow-hidden">
+                                                <div id="priority-list" class="max-h-48 overflow-y-auto divide-y divide-gray-200">
+                                                    <!-- Priority list will be loaded here dynamically -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Exclusion List -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <h4 class="text-sm font-medium text-gray-700">Exclusion List</h4>
+                                                <div class="flex space-x-2">
+                                                    <div class="relative flex items-center">
+                                                        <select id="game-select-exclude" class="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                            <!-- Will be populated dynamically -->
+                                                        </select>
+                                                        <button id="add-exclude-game" class="ml-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                            Add
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border rounded-md overflow-hidden">
+                                                <div id="exclusion-list" class="max-h-48 overflow-y-auto divide-y divide-gray-200">
+                                                    <!-- Exclusion list will be loaded here dynamically -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Save and Reload Buttons -->
+                                <div class="flex items-center justify-between">
+                                    <button id="save-settings-button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        Save Settings
+                                    </button>
+
+                                    <button id="reload-button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                        Save & Reload
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- <div id="login-tab" class="tab-panel hidden">
+                                <h2 class="text-lg font-semibold mb-4">Twitch Authentication</h2>
+                                <div id="login-status" class="mb-6">
+                                    <p id="login-message" class="text-lg mb-4">Login status will appear here...</p>
+
+                                    <div id="not-logged-in" class="p-4 border rounded bg-gray-50 mb-4">
+                                        <h3 class="font-bold text-md text-gray-700 mb-2">Login to Twitch</h3>
+                                        <p class="mb-4 text-sm">
+                                            Click the button below to initiate the Twitch login process. This will open the login prompt in the desktop application.
+                                        </p>
+                                        <button id="login-button" class="bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded flex items-center">
+                                            <i class="fab fa-twitch mr-2"></i> Login with Twitch
+                                        </button>
+                                    </div>
+
+                                    <div id="logged-in" class="hidden p-4 border rounded bg-green-50 mb-4">
+                                        <h3 class="font-bold text-md text-gray-700 mb-2">Currently logged in</h3>
+                                        <p class="mb-2 text-sm">You are currently logged in to Twitch as:</p>
+                                        <p class="font-bold text-lg mb-4" id="username-display">Username</p>
+                                        <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex flex-wrap mt-4">
+                <div class="w-full p-3">
+                    <div class="bg-white border rounded shadow p-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Twitch Drops Miner Web Interface</span>
+                            <a href="https://github.com/JourneyDocker/TwitchDropsMiner" target="_blank" class="text-purple-600 hover:text-purple-800">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- JavaScript -->    <script src="{{ url_for('static', filename='js/loading.js') }}"></script>    <script src="{{ url_for('static', filename='js/lazy-loader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global-exports.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/drop-progress.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scroll-position.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/manual-refresh.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auto-refresh-prevention.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/campaign-filters.js') }}"></script>
+    <script>
+        // Initialize loading indicators after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            addLoadingIndicators();
+            // Start preloading data in the background after initial load
+            setTimeout(() => preloadAllData(), 2000);
+            // Setup scroll position tracking - must be called after the DOM is loaded
+            if (typeof setupScrollTracking === 'function') {
+                setupScrollTracking();
+            }        });    </script>    <!-- Theme and Mode Manager Scripts -->
+    <script src="{{ url_for('static', filename='js/theme-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mode-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/advanced-mode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/responsive-header.js') }}"></script>
+</body>
+</html>

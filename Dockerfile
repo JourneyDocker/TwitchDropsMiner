@@ -58,6 +58,9 @@ ENV UNLINKED_CAMPAIGNS=0
 ENV PRIORITY_MODE=1
 ENV TDM_DOCKER=true
 
+# Expose the web interface port
+EXPOSE 9000
+
 # Set the entrypoint and default command
 ENTRYPOINT ["./docker_entrypoint.sh"]
 
@@ -65,4 +68,4 @@ ENTRYPOINT ["./docker_entrypoint.sh"]
 HEALTHCHECK --interval=10s --timeout=5s --start-period=1m --retries=3 CMD ["./healthcheck.sh"]
 
 # Default command
-CMD ["sh", "-c", "python main.py -vvv"]
+CMD ["sh", "-c", "python main.py -vvv --web"]

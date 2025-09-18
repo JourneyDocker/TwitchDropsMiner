@@ -26,12 +26,17 @@ if __name__ == "__main__":
     import argparse
     import warnings
     import traceback
+    import threading
     import tkinter as tk
     from tkinter import messagebox
-    from typing import NoReturn, TYPE_CHECKING
+    from typing import NoReturn, TYPE_CHECKING, Optional
 
-    import truststore
-    truststore.inject_into_ssl()
+    try:
+        import truststore
+        truststore.inject_into_ssl()
+    except ImportError:
+        # truststore is not required, just recommended
+        pass
 
     from translate import _
     from twitch import Twitch
@@ -40,6 +45,13 @@ if __name__ == "__main__":
     from exceptions import CaptchaRequired
     from utils import lock_file, resource_path, set_root_icon
     from constants import LOGGING_LEVELS, SELF_PATH, FILE_FORMATTER, LOG_PATH, LOCK_PATH
+
+    # Import web interface
+    try:
+        from web.app import run_web_server, initialize  # Add 'initialize' to the import
+        HAS_WEB_INTERFACE = True
+    except ImportError:
+        HAS_WEB_INTERFACE = False
 
     if TYPE_CHECKING:
         from _typeshed import SupportsWrite
@@ -74,6 +86,11 @@ if __name__ == "__main__":
         log: bool
         tray: bool
         dump: bool
+
+        # Web interface options
+        enable_web: bool = False
+        web_host: str = "127.0.0.1"
+        web_port: int = 9000
 
         # TODO: replace int with union of literal values once typeshed updates
         @property
@@ -118,6 +135,30 @@ if __name__ == "__main__":
     parser.add_argument("--tray", action="store_true")
     parser.add_argument("--log", action="store_true")
     parser.add_argument("--dump", action="store_true")
+
+    # Web interface options
+    if HAS_WEB_INTERFACE:
+        parser.add_argument(
+            "--web",
+            dest="enable_web",
+            action="store_true",
+            help="Enable the web interface"
+        )
+        parser.add_argument(
+            "--web-host",
+            dest="web_host",
+            type=str,
+            default="127.0.0.1",
+            help="Web interface host address (default: 127.0.0.1)"
+        )
+        parser.add_argument(
+            "--web-port",
+            dest="web_port",
+            type=int,
+            default=9000,
+            help="Web interface port (default: 9000)"
+        )
+
     # undocumented debug args
     parser.add_argument(
         "--debug-ws", dest="_debug_ws", action="store_true", help=argparse.SUPPRESS
@@ -166,6 +207,23 @@ if __name__ == "__main__":
         exit_status = 0
         client = Twitch(settings)
         loop = asyncio.get_running_loop()
+
+        # Start web server if enabled and available
+        if HAS_WEB_INTERFACE and args.enable_web:
+            os.environ['TDM_WEBUI_ENABLED'] = '1'
+            logger.info(f"Starting web interface on {args.web_host}:{args.web_port}")
+
+            # Initialize the web app with the event loop and client instance
+            initialize(loop, client)
+
+            # Start the web server in a separate thread
+            web_thread = threading.Thread(
+                target=run_web_server,
+                args=(args.web_host, args.web_port, False, client),
+                daemon=True
+            )
+            web_thread.start()
+
         if sys.platform == "linux":
             loop.add_signal_handler(signal.SIGINT, lambda *_: client.gui.close())
             loop.add_signal_handler(signal.SIGTERM, lambda *_: client.gui.close())
@@ -195,9 +253,6 @@ if __name__ == "__main__":
             # notify the user about the closure
             client.gui.grab_attention(sound=True)
         client.gui.close()
-        # save the application state
-        # NOTE: we have to do it after wait_until_closed,
-        # because the user can alter some settings between app termination and closing the window
         client.save(force=True)
         client.gui.stop()
         client.gui.close_window()
@@ -212,4 +267,7 @@ if __name__ == "__main__":
 
         asyncio.run(main())
     finally:
-        file.close()
+        try:
+            file.close()
+        except Exception:
+            pass

@@ -31,3 +31,7 @@ settings.json
 /appimage-build
 /*.AppImage
 /*.AppImage.zsync
+# Web interface sensitive files
+flask_session/
+.env
+credentials.json

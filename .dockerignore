@@ -49,3 +49,8 @@ setup_env.sh
 # Docker-specific files
 Dockerfile
 docker-compose.yml
+
+# Web interface sensitive files
+flask_session/
+.env
+credentials.json

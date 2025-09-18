@@ -421,7 +421,6 @@ class _AuthState:
     def invalidate(self):
         self._delattrs("access_token")
 
-
 class Twitch:
     def __init__(self, settings: Settings):
         self.settings: Settings = settings
@@ -433,6 +432,8 @@ class Twitch:
         self._drops: dict[str, TimedDrop] = {}
         self._campaigns: dict[str, DropsCampaign] = {}
         self._mnt_triggers: deque[datetime] = deque()
+        # Web interface drop update tracking
+        self._last_drop_update: dict | None = None
         # NOTE: GQL is pretty volatile and breaks everything if one runs into their rate limit.
         # Do not modify the default, safe values.
         self._qgl_limiter = RateLimiter(capacity=5, window=1)
@@ -607,6 +608,10 @@ class Twitch:
             except aiohttp.ContentTypeError as exc:
                 raise RequestException(_("login", "unexpected_content")) from exc
 
+    def reload(self):
+        """Signal the application to reload"""
+        self.change_state(State.RELOAD)
+
     async def _run(self):
         """
         Main method that runs the whole client.
@@ -635,6 +640,8 @@ class Twitch:
         channels: Final[OrderedDict[int, Channel]] = self.channels
         self.change_state(State.INVENTORY_FETCH)
         while True:
+            if self._state is State.RELOAD:
+                raise ReloadRequest()
             if self._state is State.IDLE:
                 if self.settings.dump:
                     self.gui.close()
@@ -1215,6 +1222,16 @@ class Twitch:
             # the received payload is for the drop we expected
             drop.update_minutes(message["data"]["current_progress_min"])
 
+            # Update the last drop update for web interface
+            from datetime import datetime, timezone
+            self._last_drop_update = {
+                'drop': drop,
+                'current_minutes': message["data"]["current_progress_min"],
+                'required_minutes': drop.required_minutes,
+                'timestamp': datetime.now(timezone.utc),
+                'drop_id': drop.id
+            }
+
     @task_wrapper
     async def process_notifications(self, user_id: int, message: JsonType):
         if message["type"] == "create-notification":
@@ -1546,6 +1563,20 @@ class Twitch:
             campaigns.sort(key=lambda c: c.remaining_minutes)
             return campaigns[0]
         return None
+
+    def get_active_drop(self, channel: Channel | None = None) -> TimedDrop | None:
+        """Get the currently active drop being farmed"""
+        campaign = self.get_active_campaign(channel)
+        if campaign:
+            return campaign.first_drop
+        return None
+
+    def inventory_games(self) -> list[Game]:
+        """Get the list of all games in inventory for settings UI"""
+        games = []
+        for campaign in self.inventory:
+            games.append(campaign.game)
+        return games
 
     async def get_live_streams(
         self, game: Game, *, limit: int = 20, drops_enabled: bool = True
