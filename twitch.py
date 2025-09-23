@@ -935,8 +935,9 @@ class Twitch:
                     if gql_drop is not None and gql_drop.can_earn(channel):
                         gql_drop.update_minutes(drop_data["currentMinutesWatched"])
                         drop_text: str = (
-                            f"{gql_drop.name} ({gql_drop.campaign.game}, "
-                            f"{gql_drop.current_minutes}/{gql_drop.required_minutes})"
+                            f"{gql_drop.campaign.game} | {gql_drop.campaign.name} "
+                            f"({gql_drop.campaign.claimed_drops}/{gql_drop.campaign.total_drops}) | "
+                            f"{gql_drop.name}: {gql_drop.current_minutes}/{gql_drop.required_minutes}"
                         )
                         logger.log(CALL, f"Drop progress from GQL: {drop_text}")
                         handled = True
@@ -951,8 +952,9 @@ class Twitch:
                         if (active_drop := active_campaign.first_drop) is not None:
                             active_drop.display()
                             drop_text = (
-                                f"{active_drop.name} ({active_drop.campaign.game}, "
-                                f"{active_drop.current_minutes}/{active_drop.required_minutes})"
+                                f"{active_drop.campaign.game} | {active_drop.campaign.name} "
+                                f"({active_drop.campaign.claimed_drops}/{active_drop.campaign.total_drops}) | "
+                                f"{active_drop.name}: {active_drop.current_minutes}/{active_drop.required_minutes}"
                             )
                         logger.log(CALL, f"Drop progress from active search: {drop_text}")
                         handled = True
@@ -1202,18 +1204,17 @@ class Twitch:
                 self.change_state(State.INVENTORY_FETCH)
             return
         assert msg_type == "drop-progress"
-        if drop is not None:
+        if drop is not None and drop.can_earn(self.watching_channel.get_with_default(None)):
+            # the received payload is for the drop we expected
+            drop.update_minutes(message["data"]["current_progress_min"])
             drop_text = (
-                f"{drop.name} ({drop.campaign.game}, "
-                f"{message['data']['current_progress_min']}/"
-                f"{message['data']['required_progress_min']})"
+                f"{drop.campaign.game} | {drop.campaign.name} "
+                f"({drop.campaign.claimed_drops}/{drop.campaign.total_drops}) | "
+                f"{drop.name}: {drop.current_minutes}/{drop.required_minutes}"
             )
         else:
             drop_text = "<Unknown>"
         logger.log(CALL, f"Drop update from websocket: {drop_text}")
-        if drop is not None and drop.can_earn(self.watching_channel.get_with_default(None)):
-            # the received payload is for the drop we expected
-            drop.update_minutes(message["data"]["current_progress_min"])
 
     @task_wrapper
     async def process_notifications(self, user_id: int, message: JsonType):
