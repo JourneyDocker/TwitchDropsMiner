@@ -194,7 +194,7 @@ if __name__ == "__main__":
             client.gui.status.update(_("gui", "status", "terminated"))
             # notify the user about the closure
             client.gui.grab_attention(sound=True)
-        client.gui.close()
+        await client.gui.wait_until_closed()
         # save the application state
         # NOTE: we have to do it after wait_until_closed,
         # because the user can alter some settings between app termination and closing the window
