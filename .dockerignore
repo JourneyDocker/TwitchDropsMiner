@@ -9,6 +9,7 @@ env/
 venv/
 cache/
 appimage/
+log/
 
 # Ignore common archive and executable files
 *.exe

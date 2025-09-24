@@ -23,6 +23,7 @@ if __name__ == "__main__":
     import signal
     import asyncio
     import logging
+    from logging.handlers import RotatingFileHandler
     import argparse
     import warnings
     import traceback
@@ -71,7 +72,6 @@ if __name__ == "__main__":
         _verbose: int
         _debug_ws: bool
         _debug_gql: bool
-        log: bool
         tray: bool
         dump: bool
 
@@ -116,7 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--version", action="version", version=f"v{__version__}")
     parser.add_argument("-v", dest="_verbose", action="count", default=0)
     parser.add_argument("--tray", action="store_true")
-    parser.add_argument("--log", action="store_true")
     parser.add_argument("--dump", action="store_true")
     # undocumented debug args
     parser.add_argument(
@@ -156,10 +155,10 @@ if __name__ == "__main__":
             logging.getLogger().addHandler(logging.NullHandler())
         logger = logging.getLogger("TwitchDrops")
         logger.setLevel(settings.logging_level)
-        if settings.log:
-            handler = logging.FileHandler(LOG_PATH)
-            handler.setFormatter(FILE_FORMATTER)
-            logger.addHandler(handler)
+        os.makedirs(LOG_PATH.parent, exist_ok=True)
+        handler = RotatingFileHandler(LOG_PATH, maxBytes=10485760, backupCount=10)
+        handler.setFormatter(FILE_FORMATTER)
+        logger.addHandler(handler)
         logging.getLogger("TwitchDrops.gql").setLevel(settings.debug_gql)
         logging.getLogger("TwitchDrops.websocket").setLevel(settings.debug_ws)
 
@@ -194,9 +193,12 @@ if __name__ == "__main__":
             client.gui.status.update(_("gui", "status", "terminated"))
             # notify the user about the closure
             client.gui.grab_attention(sound=True)
-        await client.gui.wait_until_closed()
+        if os.getenv('TDM_DOCKER'):
+            await client.gui.wait_until_closed()
+        else:
+            client.gui.close()
         # save the application state
-        # NOTE: we have to do it after wait_until_closed,
+        # NOTE: we have to do it after the GUI is closed,
         # because the user can alter some settings between app termination and closing the window
         client.save(force=True)
         client.gui.stop()
