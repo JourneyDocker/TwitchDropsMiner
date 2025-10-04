@@ -101,9 +101,9 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-22.04
+            runner: ubuntu-24.04
           - arch: aarch64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-24.04-arm
     runs-on: ${{matrix.runner}}
     needs:
       - validate
@@ -130,7 +130,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install libgirepository1.0-dev gir1.2-ayatanaappindicator3-0.1 libayatana-appindicator3-1 python3-tk
+          sudo apt install libgirepository1.0-dev gir1.2-ayatanaappindicator3-0.1 libayatana-appindicator3-1 python3-tk libcairo2-dev libxrender-dev libx11-dev x11proto-core-dev
 
       - name: Install project dependencies
         run: |
@@ -141,22 +141,9 @@ jobs:
         run: |
           python3 -m pip install pyinstaller
 
-      # NOTE: Remove this step if/once libxft gets updated to 2.3.5 or newer on Ubuntu 22.04, which currently has 2.3.4.
-      - name: Build a recent version of libXft
-        run: |
-          mkdir -p /tmp/libXft
-          cd /tmp/libXft
-          curl -fL https://xorg.freedesktop.org/releases/individual/lib/libXft-2.3.9.tar.xz -o libXft.tar.xz
-          sha256sum libXft.tar.xz
-          tar xvf libXft.tar.xz
-          cd libXft-*
-          ./configure --prefix=/tmp/libXft --sysconfdir=/etc --disable-static
-          make
-          make install-strip
-
       - name: Create portable executable
         run: |
-          LD_LIBRARY_PATH=/tmp/libXft/lib xvfb-run --auto-servernum pyinstaller build.spec
+          xvfb-run --auto-servernum pyinstaller build.spec
 
       - name: Show PyInstaller warnings
         run: |
@@ -183,9 +170,9 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-22.04
+            runner: ubuntu-24.04
           - arch: aarch64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-24.04-arm
     runs-on: ${{matrix.runner}}
     needs:
       - validate
@@ -207,7 +194,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install libgirepository1.0-dev gir1.2-ayatanaappindicator3-0.1 libayatana-appindicator3-1
+          sudo apt install libgirepository1.0-dev gir1.2-ayatanaappindicator3-0.1 libayatana-appindicator3-1 libcairo2-dev libxrender-dev libx11-dev x11proto-core-dev
 
       - name: Install appimage-builder
         run: |
