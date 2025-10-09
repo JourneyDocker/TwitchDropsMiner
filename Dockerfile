@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM python:3.13.7-slim-trixie AS build
+FROM python:3.13.8-slim-trixie AS build
 
 # Install system dependencies and build dependencies
 RUN apt-get update && \
@@ -31,7 +31,7 @@ RUN chmod +x ./docker_entrypoint.sh && \
     chmod +x ./healthcheck.sh
 
 # Stage 2: Final
-FROM python:3.13.7-slim-trixie
+FROM python:3.13.8-slim-trixie
 
 # Set the working directory
 WORKDIR /TwitchDropsMiner/
