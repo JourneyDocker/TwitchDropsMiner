@@ -50,7 +50,7 @@ RUN apt-get update && \
 COPY --from=build /TwitchDropsMiner /TwitchDropsMiner
 
 # Copy only the necessary files to the final image
-COPY --from=build /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=build /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Environment variables
