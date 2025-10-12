@@ -90,7 +90,7 @@ Every several seconds, the application pretends to watch a particular stream by 
        -v ./logs:/TwitchDropsMiner/logs \
        -v /etc/localtime:/etc/localtime:ro \
        --name twitch_drops_miner \
-       ghcr.io/journeyover/twitchdropsminer:main
+       ghcr.io/journeydocker/twitchdropsminer:main
      ```
 
      ### Docker Compose Example
@@ -102,7 +102,7 @@ Every several seconds, the application pretends to watch a particular stream by 
 
       services:
         twitchdropsminer:
-          image: ghcr.io/journeyover/twitchdropsminer:main
+          image: ghcr.io/journeydocker/twitchdropsminer:main
           container_name: twitch_drops_miner
           restart: always
           environment:
