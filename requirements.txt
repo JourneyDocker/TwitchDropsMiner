@@ -1,6 +1,6 @@
-aiohttp>=3.9,<4.0
-Pillow
-pystray
+aiohttp>=3.12.15,<4.0
+Pillow==11.3.0
+pystray==0.19.5
 PyGObject<3.51; sys_platform == "linux"  # required for better system tray support on Linux
 
 # web interface dependencies
@@ -13,5 +13,5 @@ argon2-cffi>=23.1.0
 python-dotenv>=1.0.0
 
 # environment-dependent dependencies
-pywin32; sys_platform == "win32"
-truststore
+pywin32==311; sys_platform == "win32"
+truststore==0.10.4

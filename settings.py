@@ -41,7 +41,6 @@ default_settings: SettingsFile = {
 
 class Settings:
     # from args
-    log: bool
     tray: bool
     dump: bool
     # args properties

@@ -9,9 +9,6 @@ Available command line arguments:
 • -v
 	Increase verbosity level. Can be stacked up several times (-vv, -vvv, etc.) to show
 	increasingly more information during application runtime.
-• --log
-	Enables logging of runtime information into a 'log.txt' file. Verbosity level of this logging
-	matches the level set by `-v`.
 • --dump
 	Start the application in a data-dump mode, where a 'dump.dat' file is created.
 	The file contains anonymous raw Twitch API data, studying of which can help troubleshoot

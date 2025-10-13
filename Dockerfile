@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM python:3.13-slim-bookworm AS build
+FROM python:3.14.0-slim-trixie AS build
 
 # Install system dependencies and build dependencies
 RUN apt-get update && \
@@ -31,7 +31,7 @@ RUN chmod +x ./docker_entrypoint.sh && \
     chmod +x ./healthcheck.sh
 
 # Stage 2: Final
-FROM python:3.13-slim-bookworm
+FROM python:3.14.0-slim-trixie
 
 # Set the working directory
 WORKDIR /TwitchDropsMiner/
@@ -50,7 +50,7 @@ RUN apt-get update && \
 COPY --from=build /TwitchDropsMiner /TwitchDropsMiner
 
 # Copy only the necessary files to the final image
-COPY --from=build /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=build /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Environment variables

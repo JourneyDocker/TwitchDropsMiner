@@ -403,7 +403,10 @@ class SelectCombobox(ttk.Combobox):
         **kwargs,
     ) -> None:
         if width is None:
-            width = max(len(v) for v in values)
+            font = Font(master, ttk.Style().lookup("TCombobox", "font"))
+            # font.measure returns width in pixels, using '0' as the average character,
+            # which is 6 pixels wide. We can convert it to width in characters by dividing.
+            width = max(font.measure(v) // 6 + 1 for v in values)
         width += width_offset
         super().__init__(
             master,
@@ -731,7 +734,6 @@ class CampaignProgress:
         self._timer_task = None
 
     def start_timer(self):
-        self._manager.print(f"Progress: {self._drop.current_minutes}/{self._drop.required_minutes} - {self._drop.campaign}")
         if self._timer_task is None:
             if self._drop is None or self._drop.remaining_minutes <= 0:
                 # if we're starting the timer at 0 drop minutes,
@@ -888,11 +890,11 @@ class ChannelList:
                 _("gui", "channels", "offline"),
             ],
         )
-        game_header = _("gui", "channels", "headings", "game")
-        viewers_header = _("gui", "channels", "headings", "viewers")
-        self._add_column("game", game_header, width_template=f" {game_header} ")
+        self._add_column("game", _("gui", "channels", "headings", "game"), width=50)
         self._add_column("drops", "🎁", width_template=" 🎁 ")
-        self._add_column("viewers", viewers_header, width_template=f" {viewers_header} ")
+        self._add_column(
+            "viewers", _("gui", "channels", "headings", "viewers"), width_template="1234567"
+        )
         self._add_column("acl_base", "📋", width_template=" 📋 ")
         self._channel_map: dict[str, Channel] = {}
 
