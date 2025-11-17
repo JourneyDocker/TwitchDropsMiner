@@ -137,6 +137,12 @@
                 "dark_mode": "Karanlık mod: ",
                 "proxy": "Proxy (Yeniden başlatma gerektirir):"
             },
+            "advanced": {
+                "name": "Gelişmiş",
+                "enable_badges_emotes": "Rozetler ve emojiler için kısmi desteği etkinleştir: ",
+                "available_drops_check": "Mevcut drop'lar için ekstra kontrolü etkinleştir: ",
+                "unlinked_campaigns": "Bağlantısız kampanyalara izin ver: "
+            },
             "game_name": "Oyun",
             "priority": "Öncelik",
             "exclude": "Hariç tut",

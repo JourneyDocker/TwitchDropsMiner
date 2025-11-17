@@ -136,8 +136,13 @@
                 "tray_notifications": "Mostrar notificaciones: ",
                 "dark_mode": "Modo oscuro: ",
                 "priority_mode": "Modo de prioridad: ",
-                "unlinked_campaigns": "Permitir campañas desvinculadas: ",
                 "proxy": "Proxy (requiere reinicio):"
+            },
+            "advanced": {
+                "name": "Avanzado",
+                "enable_badges_emotes": "Habilitar soporte parcial para insignias y emoticonos: ",
+                "available_drops_check": "Habilitar verificación adicional de drops disponibles: ",
+                "unlinked_campaigns": "Permitir campañas desvinculadas: "
             },
             "priority_modes": {
                 "priority_only": "Solo juegos preferidos",

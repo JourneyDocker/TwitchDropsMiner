@@ -138,6 +138,12 @@
                 "priority_only": "Doar cu prioritate :",
                 "proxy": "Proxy (necesită repornire) :"
             },
+            "advanced": {
+                "name": "Avansat",
+                "enable_badges_emotes": "Activează suportul parțial pentru insigne și emoticoane: ",
+                "available_drops_check": "Activează verificarea suplimentară a drop-urilor disponibile: ",
+                "unlinked_campaigns": "Permite campanii nelegate: "
+            },
             "game_name": "Nume joc",
             "priority": "Prioritate",
             "exclude": "Exclude",

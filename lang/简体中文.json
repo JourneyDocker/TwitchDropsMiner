@@ -138,6 +138,12 @@
                 "priority_mode": "掉宝挖掘模式",
                 "proxy": "代理地址："
             },
+            "advanced": {
+                "name": "高级设置",
+                "enable_badges_emotes": "启用对徽章和表情符号的部分支持：",
+                "available_drops_check": "启用额外可用掉宝检查：",
+                "unlinked_campaigns": "允许未链接的活动："
+            },
             "priority_modes": {
                 "priority_only": "仅观看优先列表中的游戏",
                 "ending_soonest": "优先挖掘即将结束的掉宝",

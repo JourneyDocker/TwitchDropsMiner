@@ -137,6 +137,12 @@
                 "dark_mode": "Donkere modus: ",
                 "proxy": "Proxy (Vereist opnieuw opstarten):"
             },
+            "advanced": {
+                "name": "Geavanceerd",
+                "enable_badges_emotes": "Gedeeltelijke ondersteuning voor badges en emotes inschakelen: ",
+                "available_drops_check": "Extra controle voor beschikbare drops inschakelen: ",
+                "unlinked_campaigns": "Niet-gekoppelde campagnes toestaan: "
+            },
             "game_name": "Spel",
             "priority": "Prioriteit",
             "exclude": "Uitsluiten",

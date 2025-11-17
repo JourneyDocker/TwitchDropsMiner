@@ -135,8 +135,13 @@
                 "tray": "Autostart ins System Tray: ",
                 "priority_only": "Nur Priorität: ",
                 "dark_mode": "Dunkler Modus: ",
-                "unlinked_campaigns": "Nicht verknüpfte Kampagnen zulassen: ",
                 "proxy": "Proxy (Erfordert Neustart):"
+            },
+            "advanced": {
+                "name": "Erweitert",
+                "enable_badges_emotes": "Teilweise Unterstützung für Abzeichen und Emotes aktivieren: ",
+                "available_drops_check": "Zusätzliche verfügbare Drops-Prüfung aktivieren: ",
+                "unlinked_campaigns": "Nicht verknüpfte Kampagnen zulassen: "
             },
             "game_name": "Spiel",
             "priority": "Priorität",

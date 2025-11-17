@@ -128,8 +128,13 @@
                 "tray": "Automaticky spusti minimalizovaně: ",
                 "priority_only": "Pouze prioritní: ",
                 "dark_mode": "Tmavý režim: ",
-                "unlinked_campaigns": "Povolit nepřipojené kampaně: ",
                 "proxy": "Proxy:"
+            },
+            "advanced": {
+                "name": "Pokročilé",
+                "enable_badges_emotes": "Povolit částečnou podporu pro odznaky a emotikony: ",
+                "available_drops_check": "Povolit extra kontrolu dostupných dropů: ",
+                "unlinked_campaigns": "Povolit nepřipojené kampaně: "
             },
             "game_name": "Název Hry",
             "priority": "Priorita",

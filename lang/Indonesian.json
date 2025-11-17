@@ -138,6 +138,12 @@
                 "priority_only": "Prioritas saja :",
                 "proxy": "Proksi (harus dimulai ulang) :"
             },
+            "advanced": {
+                "name": "Lanjutan",
+                "enable_badges_emotes": "Aktifkan dukungan parsial untuk lencana dan emotikon: ",
+                "available_drops_check": "Aktifkan pemeriksaan drop tambahan yang tersedia: ",
+                "unlinked_campaigns": "Izinkan kampanye yang tidak terhubung: "
+            },
             "game_name": "Nama game",
             "priority": "Prioritas",
             "exclude": "Kecualikan",

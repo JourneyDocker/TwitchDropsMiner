@@ -16,7 +16,7 @@ __pycache__
 /cache
 /*.jar*
 /*log.txt
-/log
+/logs
 /dump.dat
 /lock.file
 pipfile

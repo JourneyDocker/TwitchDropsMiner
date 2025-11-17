@@ -138,6 +138,12 @@
                 "priority_only": "Apenas com prioridade: ",
                 "proxy": "Proxy (requer o reinício do app):"
             },
+            "advanced": {
+                "name": "Avançado",
+                "enable_badges_emotes": "Habilitar suporte parcial para emblemas e emotes: ",
+                "available_drops_check": "Habilitar verificação adicional de drops disponíveis: ",
+                "unlinked_campaigns": "Permitir campanhas não vinculadas: "
+            },
             "game_name": "Nome do jogo",
             "priority": "Prioridade",
             "exclude": "Excluir",

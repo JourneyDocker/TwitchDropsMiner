@@ -138,6 +138,12 @@
                 "priority_mode": "掉寶模式：",
                 "proxy": "代理伺服器（需要重新啟動）："
             },
+            "advanced": {
+                "name": "進階設定",
+                "enable_badges_emotes": "啟用對徽章和表情符號的部分支援：",
+                "available_drops_check": "啟用額外可用掉寶檢查：",
+                "unlinked_campaigns": "允許未連結的活動："
+            },
             "priority_modes": {
                 "priority_only": "僅參與優先掉寶遊戲",
                 "ending_soonest": "優先觀看即將結束的掉寶活動",

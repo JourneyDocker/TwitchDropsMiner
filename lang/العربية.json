@@ -138,6 +138,12 @@
                 "priority_only": "الأولوية فقط  ",
                 "proxy": "بروكسي (يتطلب إعادة التشغيل) "
             },
+            "advanced": {
+                "name": "متقدم",
+                "enable_badges_emotes": "تمكين الدعم الجزئي للشارات والرموز التعبيرية: ",
+                "available_drops_check": "تمكين فحص إضافي للدروب المتاحة: ",
+                "unlinked_campaigns": "السماح بالحملات غير المرتبطة: "
+            },
             "game_name": "اسم اللعبة",
             "priority": "أولوية",
             "exclude": "إستبعاد",

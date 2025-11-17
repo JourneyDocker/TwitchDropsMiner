@@ -136,8 +136,13 @@
                 "tray_notifications": "Notifications dans la barre des tâches :",
                 "dark_mode": "Mode sombre : ",
                 "priority_mode": "Mode de priorité :",
-                "unlinked_campaigns": "Autoriser les campagnes non liées: ",
                 "proxy": "Proxy (nécessite un redémarrage) :"
+            },
+            "advanced": {
+                "name": "Avancé",
+                "enable_badges_emotes": "Activer le support partiel des badges et émotes : ",
+                "available_drops_check": "Activer la vérification supplémentaire des drops disponibles : ",
+                "unlinked_campaigns": "Autoriser les campagnes non liées: "
             },
             "priority_modes": {
                 "priority_only": "Liste de priorité uniquement",
