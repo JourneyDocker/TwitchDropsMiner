@@ -12,7 +12,7 @@ import aiohttp
 
 from translate import _
 from exceptions import MinerException, WebsocketClosed
-from constants import PING_INTERVAL, PING_TIMEOUT, MAX_WEBSOCKETS, WS_TOPICS_LIMIT, WEBSOCKET_TOPIC_BATCH_SIZE
+from constants import PING_INTERVAL, PING_TIMEOUT, MAX_WEBSOCKETS, WS_TOPICS_LIMIT
 from utils import (
     CHARS_ASCII,
     task_wrapper,
@@ -178,9 +178,8 @@ class Websocket:
             except WebsocketClosed as exc:
                 if exc.received:
                     # server closed the connection, not us - reconnect
-                    # include close_message if present to help debug 1009 cases
                     ws_logger.warning(
-                        f"Websocket[{self._idx}] closed unexpectedly: {websocket.close_code} ({websocket.close_message})"
+                        f"Websocket[{self._idx}] closed unexpectedly: {websocket.close_code}"
                     )
                 elif self._closed.is_set():
                     # we closed it - exit
@@ -211,44 +210,35 @@ class Websocket:
         self.set_status(refresh_topics=True)
         auth_state = await self._twitch.get_auth()
         current: set[WebsocketTopic] = set(self.topics.values())
-        # handle removed topics (with batching)
+        # handle removed topics
         removed = self._submitted.difference(current)
         if removed:
             topics_list = list(map(str, removed))
             ws_logger.debug(f"Websocket[{self._idx}]: Removing topics: {', '.join(topics_list)}")
-            # send in batches
-            for i in range(0, len(topics_list), WEBSOCKET_TOPIC_BATCH_SIZE):
-                batch = topics_list[i : i + WEBSOCKET_TOPIC_BATCH_SIZE]
-                await self.send(
-                    {
-                        "type": "UNLISTEN",
-                        "data": {
-                            "topics": batch,
-                            "auth_token": auth_state.access_token,
-                        }
+            await self.send(
+                {
+                    "type": "UNLISTEN",
+                    "data": {
+                        "topics": topics_list,
+                        "auth_token": auth_state.access_token,
                     }
-                )
-                # be gentle on the server
-                await asyncio.sleep(0.05)
+                }
+            )
             self._submitted.difference_update(removed)
-        # handle added topics (with batching)
+        # handle added topics
         added = current.difference(self._submitted)
         if added:
             topics_list = list(map(str, added))
             ws_logger.debug(f"Websocket[{self._idx}]: Adding topics: {', '.join(topics_list)}")
-            for i in range(0, len(topics_list), WEBSOCKET_TOPIC_BATCH_SIZE):
-                batch = topics_list[i : i + WEBSOCKET_TOPIC_BATCH_SIZE]
-                await self.send(
-                    {
-                        "type": "LISTEN",
-                        "data": {
-                            "topics": batch,
-                            "auth_token": auth_state.access_token,
-                        }
+            await self.send(
+                {
+                    "type": "LISTEN",
+                    "data": {
+                        "topics": topics_list,
+                        "auth_token": auth_state.access_token,
                     }
-                )
-                # be gentle on the server
-                await asyncio.sleep(0.05)
+                }
+            )
             self._submitted.update(added)
 
     async def _gather_recv(self, messages: list[JsonType], timeout: float = 0.5):
@@ -265,7 +255,6 @@ class Websocket:
                 message: JsonType = json.loads(raw_message.data)
                 messages.append(message)
             elif raw_message.type is WSMsgType.CLOSE:
-                ws_logger.debug(f"Websocket[{self._idx}] received close frame: {raw_message}")
                 raise WebsocketClosed(received=True)
             elif raw_message.type is WSMsgType.CLOSED:
                 raise WebsocketClosed(received=False)
@@ -336,23 +325,8 @@ class Websocket:
         assert ws is not None
         if message["type"] != "PING":
             message["nonce"] = create_nonce(CHARS_ASCII, 30)
-        # Prepare minified payload and log length before sending
-        # Prepare a safe payload string for sending; avoid leaking auth tokens
-        payload_text = json_minify(message)
-        # create a log-safe copy by masking auth_token values
-        try:
-            log_message = dict(message)
-            if "data" in log_message and isinstance(log_message["data"], dict):
-                if "auth_token" in log_message["data"]:
-                    log_message["data"]["auth_token"] = "<redacted>"
-            log_text = json_minify(log_message)
-        except Exception:
-            log_text = "<unserializable>"
-        payload_bytes = payload_text.encode("utf-8")
-        ws_logger.debug(
-            f"Websocket[{self._idx}] sending {len(payload_bytes)} bytes: {log_text}"
-        )
-        await ws.send_str(payload_text)
+        await ws.send_json(message, dumps=json_minify)
+        ws_logger.debug(f"Websocket[{self._idx}] sent: {message}")
 
 
 class WebsocketPool:
