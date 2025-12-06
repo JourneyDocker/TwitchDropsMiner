@@ -228,7 +228,7 @@ Non-translations related credits should be added to the first section instead.
 | @nwvh                  | Czech ( Čeština )                                                       |
 | @Kjerne                | Danish ( Dansk )                                                        |
 | @roobini-gamer         | French ( Français )                                                     |
-| @Calvineries           | For the French (Français) translation revisions                         |
+| @Calvineries           | French ( Français ) translation revisions                               |
 | @ThisIsCyreX           | German ( Deutsch )                                                      |
 | @Eriza-Z               | Indonesian                                                              |
 | @casungo               | Italian ( Italiano )                                                    |
@@ -236,8 +236,9 @@ Non-translations related credits should be added to the first section instead.
 | @Patriot99             | Polish ( Polski ) translation and revisions (co-authored with @DevilXD) |
 | @zarigata              | Portuguese ( Português )                                                |
 | @Sergo1217             | Russian ( Русский )                                                     |
-| @kilroy98              | Russian (Русский) translation corrections and revisions                 |
+| @kilroy98              | Russian ( Русский ) translation corrections and revisions               |
 | @Shofuu                | Spanish ( Español ) translation and revisions                           |
 | @alikdb                | Turkish ( Türkçe )                                                      |
+| @DogancanYr            | Turkish ( Türkçe ) translation revisions                                |
 | @Nollasko              | Ukrainian ( Українська ) translation and revisions                      |
-| @kilroy98              | Ukrainian (Українська) translation corrections and revisions            |
+| @kilroy98              | Ukrainian ( Українська ) translation corrections and revisions          |
