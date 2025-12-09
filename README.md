@@ -240,5 +240,6 @@ Non-translations related credits should be added to the first section instead.
 | @Shofuu                | Spanish ( Español ) translation and revisions                           |
 | @alikdb                | Turkish ( Türkçe )                                                      |
 | @DogancanYr            | Turkish ( Türkçe ) translation revisions                                |
+| @Elderly-Emre          | Turkish ( Türkçe ) translation revisions                                |
 | @Nollasko              | Ukrainian ( Українська ) translation and revisions                      |
 | @kilroy98              | Ukrainian ( Українська ) translation corrections and revisions          |
