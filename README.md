@@ -205,41 +205,4 @@ This means that features such as:
 
 For more context about these goals, please check out these issues: [#161](https://github.com/DevilXD/TwitchDropsMiner/issues/161), [#105](https://github.com/DevilXD/TwitchDropsMiner/issues/105), [#84](https://github.com/DevilXD/TwitchDropsMiner/issues/84)
 
-### Credits:
-
-<!---
-Note: The translations credits are sorted alphabetically, based on their English language name.
-When adding a new entry, please ensure to insert it in the correct place in the second section.
-Non-translations related credits should be added to the first section instead.
-
-• Please leave a single empty new line at the end of the file.
--->
-
-| **Contributor**        | **Translation**                                                         |
-|------------------------|-------------------------------------------------------------------------|
-| @guihkx                | CI script, CI maintenance, Linux builds                                 |
-| @kWAYTV                | Implementation of the dark mode theme                                   |
-| @Bamboozul             | Arabic ( العربية )                                                      |
-| @Suz1e                 | Chinese ( 简体中文 ) translation and revisions                           |
-| @wwj010                | Chinese ( 简体中文 ) translation corrections and revisions               |
-| @zhangminghao1989      | Chinese ( 简体中文 ) translation corrections and revisions               |
-| @Ricky103403           | Traditional Chinese ( 繁體中文 )                                         |
-| @LusTerCsI             | Traditional Chinese ( 繁體中文 ) corrections and revisions               |
-| @nwvh                  | Czech ( Čeština )                                                       |
-| @Kjerne                | Danish ( Dansk )                                                        |
-| @roobini-gamer         | French ( Français )                                                     |
-| @Calvineries           | French ( Français ) translation revisions                               |
-| @ThisIsCyreX           | German ( Deutsch )                                                      |
-| @Eriza-Z               | Indonesian                                                              |
-| @casungo               | Italian ( Italiano )                                                    |
-| @ShimadaNanaki         | Japanese ( 日本語 )                                                      |
-| @Patriot99             | Polish ( Polski ) translation and revisions (co-authored with @DevilXD) |
-| @zarigata              | Portuguese ( Português )                                                |
-| @Sergo1217             | Russian ( Русский )                                                     |
-| @kilroy98              | Russian ( Русский ) translation corrections and revisions               |
-| @Shofuu                | Spanish ( Español ) translation and revisions                           |
-| @alikdb                | Turkish ( Türkçe )                                                      |
-| @DogancanYr            | Turkish ( Türkçe ) translation revisions                                |
-| @Elderly-Emre          | Turkish ( Türkçe ) translation revisions                                |
-| @Nollasko              | Ukrainian ( Українська ) translation and revisions                      |
-| @kilroy98              | Ukrainian ( Українська ) translation corrections and revisions          |
+### [Credits](https://github.com/DevilXD/TwitchDropsMiner/tree/master?tab=readme-ov-file#credits)
