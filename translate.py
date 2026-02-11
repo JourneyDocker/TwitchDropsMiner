@@ -374,6 +374,11 @@ default_translation: Translation = {
                 "priority_mode": "Priority mode: ",
                 "proxy": "Proxy (requires restart):",
             },
+            "notifications": {
+                "name": "Notifications",
+                "url": "Notification URLs (comma or newline-separated):",
+                "test": "Test Notification",
+            },
             "advanced": {
                 "name": "Advanced",
                 "warning": "Warning!",

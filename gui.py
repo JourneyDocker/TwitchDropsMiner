@@ -31,7 +31,7 @@ if sys.platform == "win32":
 from cache import ImageCache
 from translate import _
 from exceptions import MinerException, ExitRequest
-from utils import resource_path, set_root_icon, webopen, Game, _T
+from utils import resource_path, set_root_icon, webopen, Game, _T, notification_urls
 from constants import (
     MAX_INT,
     SELF_PATH,
@@ -1546,6 +1546,14 @@ def proxy_validate(entry: PlaceholderEntry, settings: Settings) -> bool:
     return valid
 
 
+def notification_url_validate(entry: PlaceholderEntry, settings: Settings) -> bool:
+    raw_url = entry.get().strip()
+    urls = notification_urls(raw_url, mode="set")
+    entry.replace(notification_urls(urls, mode="str"))
+    settings.notification_url = urls
+    return True
+
+
 class _SettingsVars(TypedDict):
     tray: IntVar
     proxy: StringVar
@@ -1554,6 +1562,7 @@ class _SettingsVars(TypedDict):
     language: StringVar
     priority_mode: StringVar
     tray_notifications: IntVar
+    notification_url: StringVar
     unlinked_campaigns: IntVar
     enable_badges_emotes: IntVar
     available_drops_check: IntVar
@@ -1591,6 +1600,9 @@ class SettingsPanel:
             "dark_mode": IntVar(master, int(self._settings.dark_mode)),
             "priority_mode": StringVar(master, self.PRIORITY_MODES[priority_mode]),
             "tray_notifications": IntVar(master, self._settings.tray_notifications),
+            "notification_url": StringVar(
+                master, notification_urls(self._settings.notification_url, mode="str")
+            ),
             "unlinked_campaigns": IntVar(master, self._settings.unlinked_campaigns),
             "enable_badges_emotes": IntVar(master, self._settings.enable_badges_emotes),
             "available_drops_check": IntVar(master, self._settings.available_drops_check),
@@ -1734,6 +1746,41 @@ class SettingsPanel:
             advanced_center, variable=self._vars["unlinked_campaigns"], command=self.unlinked_campaigns
         ).grid(column=1, row=irow, sticky="w")
 
+        # Notifications section
+        notifications_frame = ttk.LabelFrame(
+            center_frame, padding=(4, 0, 4, 4), text=_("gui", "settings", "notifications", "name")
+        )
+        notifications_frame.grid(column=0, row=2, sticky="nsew")
+        notifications_frame.columnconfigure(0, weight=1)
+        notifications_center = ttk.Frame(notifications_frame)
+        notifications_center.grid(column=0, row=0)
+        ttk.Label(
+            notifications_center, text=_("gui", "settings", "notifications", "url")
+        ).grid(column=0, row=0, sticky="w")
+        self._notification_url = PlaceholderEntry(
+            notifications_center,
+            width=37,
+            validate="focusout",
+            textvariable=self._vars["notification_url"],
+            placeholder="discord://webhook_id/webhook_token,mailto://user@example.com",
+        )
+        self._notification_url.config(
+            validatecommand=partial(
+                notification_url_validate,
+                self._notification_url,
+                self._settings,
+            )
+        )
+        self._notification_url.grid(column=0, row=1)
+        self._notification_url_trace = self._vars["notification_url"].trace_add(
+            "write", self._on_notification_url_change
+        )
+        ttk.Button(
+            notifications_center,
+            text=_("gui", "settings", "notifications", "test"),
+            command=self.test_notification,
+        ).grid(column=1, row=1, padx=(6, 0))
+
         # Priority section
         priority_frame = ttk.LabelFrame(
             center_frame, padding=(4, 0, 4, 4), text=_("gui", "settings", "priority")
@@ -1827,7 +1874,7 @@ class SettingsPanel:
 
         # Reload button
         reload_frame = ttk.Frame(center_frame)
-        reload_frame.grid(column=0, row=2, columnspan=3, pady=4)
+        reload_frame.grid(column=0, row=3, columnspan=3, pady=4)
         ttk.Label(reload_frame, text=_("gui", "settings", "reload_text")).grid(column=0, row=0)
         ttk.Button(
             reload_frame,
@@ -1844,6 +1891,16 @@ class SettingsPanel:
     def update_dark_mode(self) -> None:
         self._settings.dark_mode = bool(self._vars["dark_mode"].get())
         self._manager.apply_theme(self._settings.dark_mode)
+
+    def test_notification(self) -> None:
+        notification_url_validate(self._notification_url, self._settings)
+        self._manager._twitch.notifications.notify_test()
+
+    def _on_notification_url_change(self, *args) -> None:
+        raw_url = self._notification_url.get().strip()
+        urls = notification_urls(raw_url, mode="set")
+        self._settings.notification_url = urls
+        self._manager._twitch.notifications.reload(urls)
 
     def _get_self_path(self) -> str:
         # NOTE: we need double quotes in case the path contains spaces

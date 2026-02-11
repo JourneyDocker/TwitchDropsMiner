@@ -180,6 +180,7 @@ class BaseDrop:
             )
             if pystray.Icon.HAS_MENU:
                 self._twitch.gui.tray.notify(claim_text, _("gui", "tray", "notification_title"))
+            self._twitch.notifications.notify_drop(self)
         else:
             logger.error(f"Drop claim has potentially failed! Drop ID: {self.id}")
         return result

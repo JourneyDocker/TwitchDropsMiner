@@ -18,6 +18,7 @@ Every several seconds, the application pretends to watch a particular stream by 
 - Automatic channel stream switching, when the one you were currently watching goes offline, as well as when a channel streaming a higher priority game goes online.
 - Login session is saved in a cookies file, so you don't need to login every time.
 - Mining is automatically started as new campaigns appear, and stopped when the last available drops have been mined.
+- Optional Apprise notifications for claimed drops.
 
 <details>
   <summary><h3>Usage (click for dropdown)</h3></summary>
@@ -70,6 +71,8 @@ Every several seconds, the application pretends to watch a particular stream by 
      Configure the container with environment variables to customize its behavior:
 
      - **Allow Unlinked Campaigns:** Set the `UNLINKED_CAMPAIGNS` environment variable to `1` to ENABLE mining drops from campaigns that are not linked to your account. By default, this is set to `0` (disabled). Note that even when unlinked campaigns are enabled, the application will still consider your priority list, so ensure the desired game is included in your priority list.
+
+      - **Apprise URLs:** Set the `APPRISE_URL` environment variable to a comma list of Apprise URLs (e.g., Discord webhooks, email, etc.).
 
      - **Priority Mode:** Set the `PRIORITY_MODE` environment variable to one of the following values to determine how the miner prioritizes campaigns:
        - `0`: **Use the priority list directly.** Campaigns are mined in the exact order they appear in the priority list, without additional prioritization.

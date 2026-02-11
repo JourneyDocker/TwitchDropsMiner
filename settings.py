@@ -5,7 +5,7 @@ from typing import Any, TypedDict, TYPE_CHECKING
 
 from yarl import URL
 
-from utils import json_load, json_save
+from utils import json_load, json_save, notification_urls
 from constants import SETTINGS_PATH, DEFAULT_LANG, PriorityMode
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ class SettingsFile(TypedDict):
     autostart_tray: bool
     connection_quality: int
     tray_notifications: bool
+    notification_url: set[str]
     unlinked_campaigns: bool
     enable_badges_emotes: bool
     available_drops_check: bool
@@ -36,6 +37,7 @@ default_settings: SettingsFile = {
     "connection_quality": 1,
     "language": DEFAULT_LANG,
     "tray_notifications": True,
+    "notification_url": set(),
     "unlinked_campaigns": False,
     "enable_badges_emotes": False,
     "available_drops_check": False,
@@ -60,6 +62,7 @@ class Settings:
     autostart_tray: bool
     connection_quality: int
     tray_notifications: bool
+    notification_url: set[str]
     unlinked_campaigns: bool
     enable_badges_emotes: bool
     available_drops_check: bool
@@ -78,6 +81,10 @@ class Settings:
             self._settings["priority_mode"] = PriorityMode(int(os.environ.get('PRIORITY_MODE')))
         if 'UNLINKED_CAMPAIGNS' in os.environ:
             self._settings["unlinked_campaigns"] = os.environ.get('UNLINKED_CAMPAIGNS') == '1'
+        if 'APPRISE_URL' in os.environ:
+            self._settings["notification_url"] = notification_urls(
+                os.environ.get('APPRISE_URL') or '', mode="set"
+            )
 
     # default logic of reading settings is to check args first, then the settings file
     def __getattr__(self, name: str, /) -> Any:

@@ -237,6 +237,27 @@ def merge_json(obj: JsonType, template: Mapping[Any, Any]) -> None:
             obj[k] = template[k]
 
 
+def notification_urls(
+    value: str | abc.Iterable[str],
+    *,
+    mode: Literal["list", "set", "str"] = "list",
+) -> list[str] | set[str] | str:
+    if isinstance(value, str):
+        entries: list[str] = []
+        for line in value.replace("\r", "").split("\n"):
+            entries.extend(line.split(","))
+        normalized = [entry.strip() for entry in entries if entry.strip()]
+    else:
+        normalized = [str(entry).strip() for entry in value if str(entry).strip()]
+    if mode == "list":
+        return normalized
+    if mode == "set":
+        return set(normalized)
+    if mode == "str":
+        return ", ".join(sorted(set(normalized)))
+    raise ValueError(f"Unsupported mode: {mode}")
+
+
 def json_load(path: Path, defaults: _JSON_T, *, merge: bool = True) -> _JSON_T:
     defaults_dict: JsonType = dict(defaults)
     if path.exists():

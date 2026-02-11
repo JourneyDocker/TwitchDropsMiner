@@ -22,6 +22,7 @@ from gui import GUIManager
 from channel import Channel
 from websocket import WebsocketPool
 from inventory import DropsCampaign
+from notifications import AppriseNotifier
 from exceptions import (
     ExitRequest,
     GQLException,
@@ -440,6 +441,7 @@ class Twitch:
         self._client_type: ClientInfo = ClientType.ANDROID_APP
         self._session: aiohttp.ClientSession | None = None
         self._auth_state: _AuthState = _AuthState(self)
+        self.notifications = AppriseNotifier(self.get_session)
         # GUI
         self.gui = GUIManager(self)
         # Storing and watching channels
@@ -617,6 +619,7 @@ class Twitch:
         • Changing the stream that's being watched if necessary
         """
         self.settings.save(force=True)
+        self.notifications.reload(self.settings.notification_url)
         self.gui.start()
         auth_state = await self.get_auth()
         await self.websocket.start()
