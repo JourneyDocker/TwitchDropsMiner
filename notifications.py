@@ -50,10 +50,7 @@ class DiscordEmbed:
         return {
             "embeds": [embed],
             "username": "Twitch Drops Miner",
-            "avatar_url": (
-                "https://raw.githubusercontent.com/DevilXD/TwitchDropsMiner/refs/heads/master/"
-                "icons/pickaxe.ico"
-            ),
+            "avatar_url": "https://i.imgur.com/muLruAh.png",
         }
 
 
