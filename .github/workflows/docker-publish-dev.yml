@@ -15,4 +15,5 @@ jobs:
     with:
       tag: dev
       platforms: linux/amd64
+      registry: github
     secrets: inherit
