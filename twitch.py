@@ -1297,6 +1297,7 @@ class Twitch:
                 if backoff.steps > 1:
                     # just so that quick retries that sometimes happen, aren't shown
                     self.print(_("error", "no_connection").format(seconds=round(delay)))
+                    logger.error(f"Connection failed to URL: {url}")
             finally:
                 if response is not None:
                     response.release()

@@ -133,7 +133,7 @@ class Websocket:
             ):
                 rounded_delay = round(delay)
                 ws_logger.info(
-                    f"Websocket[{self._idx}] connection problem (sleep: {rounded_delay}s)"
+                    f"Websocket[{self._idx}] connection problem to {ws_url} (sleep: {rounded_delay}s)"
                 )
                 if os.getenv('TDM_DOCKER') and rounded_delay == 180:
                     with open('/tmp/healthcheck.websocketerror', 'w') as f:
