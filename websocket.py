@@ -12,7 +12,7 @@ import aiohttp
 
 from translate import _
 from exceptions import MinerException, WebsocketClosed
-from constants import PING_INTERVAL, PING_TIMEOUT, MAX_WEBSOCKETS, WS_TOPICS_LIMIT
+from constants import IS_DOCKER, PING_INTERVAL, PING_TIMEOUT, MAX_WEBSOCKETS, WS_TOPICS_LIMIT
 from utils import (
     CHARS_ASCII,
     chunk,
@@ -135,7 +135,7 @@ class Websocket:
                 ws_logger.info(
                     f"Websocket[{self._idx}] connection problem to {ws_url} (sleep: {rounded_delay}s)"
                 )
-                if os.getenv('TDM_DOCKER') and rounded_delay == 180:
+                if IS_DOCKER and rounded_delay == 180:
                     with open('/tmp/healthcheck.websocketerror', 'w') as f:
                         f.write('Container is Unhealthy')
                 await asyncio.sleep(delay)

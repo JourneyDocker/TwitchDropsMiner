@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 # True if we're running from a built EXE (or a Linux AppImage), False inside a dev build
 IS_APPIMAGE = "APPIMAGE" in os.environ and os.path.exists(os.environ["APPIMAGE"])
 IS_PACKAGED = hasattr(sys, "_MEIPASS") or IS_APPIMAGE
+# True if running inside a Docker container
+IS_DOCKER = bool(os.getenv("TDM_DOCKER"))
 # logging special levels
 CALL: int = logging.INFO - 1
 logging.addLevelName(CALL, "CALL")

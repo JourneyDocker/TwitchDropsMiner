@@ -20,7 +20,15 @@ from datetime import datetime, timedelta, timezone
 from tkinter import Tk, ttk, StringVar, DoubleVar, IntVar
 from typing import Any, Union, Tuple, TypedDict, NoReturn, Generic, TYPE_CHECKING
 
-import pystray
+try:
+    import pystray
+except ImportError:
+    from types import SimpleNamespace as _NS
+    pystray = _NS(
+        Icon=_NS(HAS_MENU=False),
+        Menu=_NS(SEPARATOR=None),
+        MenuItem=lambda *a, **kw: None,
+    )
 from yarl import URL
 from PIL.ImageTk import PhotoImage
 from PIL import Image as Image_module

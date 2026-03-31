@@ -3,7 +3,12 @@ from __future__ import annotations
 import re
 import math
 import logging
-import pystray
+
+try:
+    import pystray
+except ImportError:
+    from types import SimpleNamespace as _NS
+    pystray = _NS(Icon=_NS(HAS_MENU=False))
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING

@@ -6,10 +6,15 @@ from multiprocessing import freeze_support
 from datetime import datetime
 import os
 from time import time
-import pystray
+
+try:
+    import pystray
+except ImportError:
+    from types import SimpleNamespace as _NS
+    pystray = _NS(Icon=_NS(HAS_MENU=False))
 
 if __name__ == "__main__":
-    if os.getenv('TDM_DOCKER'):
+    if os.getenv('TDM_DOCKER'):  # before constants are loaded
       for filename in ['healthcheck.connectionerror', 'healthcheck.websocketerror']:
         with open(f'/tmp/{filename}', 'w') as f:
           f.write('Container is Healthy')
@@ -40,7 +45,7 @@ if __name__ == "__main__":
     from version import __version__
     from exceptions import CaptchaRequired
     from utils import lock_file, resource_path, set_root_icon
-    from constants import LOGGING_LEVELS, SELF_PATH, FILE_FORMATTER, LOG_PATH, LOCK_PATH
+    from constants import IS_DOCKER, LOGGING_LEVELS, SELF_PATH, FILE_FORMATTER, LOG_PATH, LOCK_PATH
 
     if TYPE_CHECKING:
         from _typeshed import SupportsWrite
@@ -193,7 +198,7 @@ if __name__ == "__main__":
             client.gui.status.update(_("gui", "status", "terminated"))
             # notify the user about the closure
             client.gui.grab_attention(sound=True)
-        if os.getenv('TDM_DOCKER'):
+        if IS_DOCKER:
             await client.gui.wait_until_closed()
         else:
             client.gui.close()

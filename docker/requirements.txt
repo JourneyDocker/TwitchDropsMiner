@@ -1,0 +1,6 @@
+aiohttp==3.13.4,<4.0
+apprise==1.9.9
+Pillow==12.1.1
+
+# environment-dependent dependencies
+truststore==0.10.4

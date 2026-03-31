@@ -14,7 +14,12 @@ from contextlib import suppress, asynccontextmanager
 from typing import Any, Literal, Final, NoReturn, overload, cast, TYPE_CHECKING
 
 import aiohttp
-import pystray
+
+try:
+    import pystray
+except ImportError:
+    from types import SimpleNamespace as _NS
+    pystray = _NS(Icon=_NS(HAS_MENU=False))
 from yarl import URL
 
 from translate import _
@@ -23,6 +28,7 @@ from channel import Channel
 from websocket import WebsocketPool
 from inventory import DropsCampaign
 from notifications import AppriseNotifier
+from constants import IS_DOCKER
 from exceptions import (
     ExitRequest,
     GQLException,
@@ -595,7 +601,7 @@ class Twitch:
                 pass
 
         # Start heartbeat task for Docker health checks
-        if os.getenv('TDM_DOCKER'):
+        if IS_DOCKER:
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
         while True:
@@ -1262,7 +1268,7 @@ class Twitch:
         session_timeout = timedelta(seconds=session.timeout.total or 0)
         backoff = ExponentialBackoff(maximum=3*60)
         for delay in backoff:
-            if os.getenv('TDM_DOCKER'):
+            if IS_DOCKER:
               if delay == 180:
                 with open('/tmp/healthcheck.connectionerror', 'w') as f:
                   f.write('Container is Unhealthy')
@@ -1667,7 +1673,7 @@ class Twitch:
         while True:
             try:
                 # Write current UNIX timestamp to heartbeat file
-                if os.getenv('TDM_DOCKER'):
+                if IS_DOCKER:
                     with open('/tmp/healthcheck.heartbeat', 'w') as f:
                         f.write(str(int(time())))
 
