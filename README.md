@@ -188,6 +188,16 @@ Every several seconds, the application pretends to watch a particular stream by 
 
 If you'd be interested in running the latest master from source or building your own executable, see the wiki page explaining how to do so: https://github.com/DevilXD/TwitchDropsMiner/wiki/Setting-up-the-environment,-building-and-running
 
+### Support
+
+If you encounter any issues with the miner:
+
+- Please see the [troubleshooting page](https://github.com/DevilXD/TwitchDropsMiner/wiki/Troubleshooting) for some common issues and their explanation.  
+- Please search the [issues page](https://github.com/DevilXD/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) or [issues page](https://github.com/JourneyDocker/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) to see if your issue hasn't been reported yet.  
+- **Before reporting a new issue**, please test the original version to see if the problem happens there as well:
+  - If the issue occurs on the original upstream version, please report it on the DevilXD repo.
+  - If the issue is **only** present on this version, please report the issue on my repo.
+
 ### Project goals:
 
 Twitch Drops Miner (TDM for short) has been designed with a couple of simple goals in mind. These are, specifically:
