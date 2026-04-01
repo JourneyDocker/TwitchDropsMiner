@@ -1,4 +1,4 @@
-aiohttp==3.13.4,<4.0
+aiohttp==3.13.5,<4.0
 apprise==1.9.9
 Pillow==12.1.1
 pystray==0.19.5
