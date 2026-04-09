@@ -1,5 +1,5 @@
 # Stage 0: Base
-FROM python:3.14.3-slim-trixie AS base
+FROM python:3.14.4-slim-trixie AS base
 
 # Set the working directory
 WORKDIR /TwitchDropsMiner
