@@ -868,7 +868,7 @@ class Twitch:
                     # NOTE: we need to sort the channels every time because one channel
                     # can end up streaming any game - channels aren't game-tied
                     for channel in sorted(channels.values(), key=self.get_priority):
-                        if self.can_watch(channel) and self.should_switch(channel):
+                        if self.should_switch(channel):
                             new_watching = channel
                             break
                 watching_channel = self.watching_channel.get_with_default(None)
@@ -1037,8 +1037,10 @@ class Twitch:
         """
         Determines if the given channel qualifies as a switch candidate.
         """
+        if not self.can_watch(channel):
+            return False
         watching_channel = self.watching_channel.get_with_default(None)
-        if watching_channel is None:
+        if watching_channel is None or not self.can_watch(watching_channel):
             return True
         channel_order = self.get_priority(channel)
         watching_order = self.get_priority(watching_channel)
@@ -1134,7 +1136,7 @@ class Twitch:
         if stream_before is None:
             if stream_after is not None:
                 # Channel going ONLINE
-                if self.can_watch(channel) and self.should_switch(channel):
+                if self.should_switch(channel):
                     # we can watch the channel, and we should
                     self.print(_("status", "goes_online").format(channel=channel.name))
                     self.watch(channel)
@@ -1174,8 +1176,8 @@ class Twitch:
                     f"(🎁: {stream_before.drops_enabled and '✔' or '❌'} -> "
                     f"{stream_after.drops_enabled and '✔' or '❌'})"
                 )
-                if self.can_watch(channel) and self.should_switch(channel):
-                    # ... and we can and should watch it
+                if self.should_switch(channel):
+                    # ... and we should watch it
                     self.watch(channel)
         channel.display()
 
