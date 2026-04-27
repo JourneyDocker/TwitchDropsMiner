@@ -1,5 +1,5 @@
 aiohttp==3.13.5,<4.0
-apprise==1.9.9
+apprise==1.10.0
 Pillow==12.2.0
 
 # environment-dependent dependencies
