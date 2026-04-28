@@ -19,7 +19,7 @@ from translate import _
 from channel import Channel
 from utils import timestamp, Game
 from exceptions import GQLException
-from constants import GQL_OPERATIONS, MAX_EXTRA_MINUTES, URLType, State
+from constants import GQL_QUERIES, MAX_EXTRA_MINUTES, URLType, State
 
 if TYPE_CHECKING:
     from collections import abc
@@ -200,7 +200,7 @@ class BaseDrop:
             return False
         try:
             response = await self._twitch.gql_request(
-                GQL_OPERATIONS["ClaimDrop"].with_variables(
+                GQL_QUERIES["ClaimDrop"].with_variables(
                     {"input": {"dropInstanceID": self.claim_id}}
                 )
             )
