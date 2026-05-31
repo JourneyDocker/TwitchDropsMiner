@@ -1027,7 +1027,7 @@ class Twitch:
                     and channel.drops_enabled
                     and channel.game in self.wanted_games
                     # let the campaign ignore all channel-related checks
-                    or campaign.game.is_special_events()
+                    or campaign.game.is_special()
                 )
             ):
                 return True
