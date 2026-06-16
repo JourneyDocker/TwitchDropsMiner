@@ -15,6 +15,22 @@ from typing import Any, Literal, Final, NoReturn, overload, cast, TYPE_CHECKING
 
 import aiohttp
 
+# Workaround aiohttp 3.14.x + Python 3.14 compatibility issue:
+# CookieJar.save() iterates morsel._reserved (now includes 'partitioned')
+# and calls morsel[attr] without checking existence, raising KeyError when
+# the attribute was never set on the morsel instance.
+_orig_cookie_jar_save = aiohttp.CookieJar.save
+def _safe_cookie_jar_save(self, file_path):
+    for cookie in self._cookies.values():
+        for morsel in cookie.values():
+            for attr in morsel._reserved:
+                try:
+                    morsel[attr]
+                except KeyError:
+                    morsel[attr] = ""
+    _orig_cookie_jar_save(self, file_path)
+aiohttp.CookieJar.save = _safe_cookie_jar_save
+
 try:
     import pystray
 except ImportError:
