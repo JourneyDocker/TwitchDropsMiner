@@ -1,6 +1,6 @@
 aiohttp==3.14.1,<4.0
 apprise==1.11.0
-Pillow==12.2.0
+Pillow==12.3.0
 
 # environment-dependent dependencies
 truststore==0.10.4
