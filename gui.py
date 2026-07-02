@@ -1664,6 +1664,7 @@ class SettingsPanel:
         ttk.Checkbutton(
             checkboxes_frame, variable=self._vars["autostart"], command=self.update_autostart
         ).grid(column=1, row=irow, sticky="w")
+        self._vars["autostart"].set(self._query_autostart())
         if sys.platform != "darwin":
             ttk.Label(
                 checkboxes_frame, text=_("gui", "settings", "general", "tray")
@@ -1902,8 +1903,6 @@ class SettingsPanel:
             text=_("gui", "settings", "reload"),
             command=self._manager._twitch.state_change(State.INVENTORY_FETCH),
         ).grid(column=1, row=0)
-
-        self._vars["autostart"].set(self._query_autostart())
 
     def clear_selection(self) -> None:
         self._priority_list.selection_clear(0, "end")
