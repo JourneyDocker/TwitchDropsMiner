@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@main
+        uses: actions/checkout@v7
 
       - name: Set up variables
         id: vars
@@ -66,7 +66,7 @@ jobs:
 
       # Ensure Python version
       - name: Set up Python
-        uses: actions/setup-python@main
+        uses: actions/setup-python@v7
         with:
           python-version: ${{env.PYTHON_VERSION}}
 
@@ -92,7 +92,7 @@ jobs:
           Compress-Archive -Path $FolderName -DestinationPath Twitch.Drops.Miner.Windows.zip
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7
         with:
           if-no-files-found: error
           name: Twitch.Drops.Miner.Windows
@@ -166,7 +166,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@main
+        uses: actions/checkout@v7
 
       - name: Set up variables
         id: vars
@@ -213,7 +213,7 @@ jobs:
           7z a 'Twitch.Drops.Miner.Linux.PyInstaller-${{matrix.arch}}.zip' "${folder}"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7
         with:
           if-no-files-found: error
           name: Twitch.Drops.Miner.Linux.PyInstaller-${{matrix.arch}}
@@ -235,7 +235,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@main
+        uses: actions/checkout@v7
 
       - name: Set up variables
         id: vars
@@ -277,7 +277,7 @@ jobs:
           7z a 'Twitch.Drops.Miner.Linux.AppImage-${{matrix.arch}}.zip' "${folder}"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7
         with:
           if-no-files-found: error
           name: Twitch.Drops.Miner.Linux.AppImage-${{matrix.arch}}
@@ -302,7 +302,7 @@ jobs:
           echo "date_now=$(date --rfc-3339=seconds)" >> "${GITHUB_OUTPUT}"
 
       - name: Download build artifacts from previous jobs
-        uses: actions/download-artifact@main
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -318,7 +318,7 @@ jobs:
           GITHUB_TOKEN: ${{github.token}}
 
       - name: Create a new dev build release
-        uses: ncipollo/release-action@main
+        uses: ncipollo/release-action@v1.21.0
         with:
           allowUpdates: true
           artifactErrorsFailBuild: true
