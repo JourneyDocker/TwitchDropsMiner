@@ -1,0 +1,168 @@
+name: Upstream Sync
+
+# Cherry-picks new commits from DevilXD/TwitchDropsMiner into this repository.
+# The sync point is tracked by the `upstream-sync` git tag, which points at the
+# last upstream commit that was cherry-picked. The whole range is cherry-picked
+# in one shot: if any commit conflicts, the run aborts, nothing is pushed, and
+# the workflow fails so the conflicts can be cherry-picked and fixed by hand.
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Cherry-pick and report, but do not push"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: https://github.com/DevilXD/TwitchDropsMiner.git
+  UPSTREAM_BRANCH: master
+  SYNC_TAG: upstream-sync
+  # Fallback sync point if the tag is missing. This commit is already
+  # cherry-picked into main, so the first run starts from here.
+  SYNC_START_COMMIT: 22d0c6134f9291d1e904012c465504a22bd3f97c
+
+jobs:
+  sync:
+    name: Cherry-pick upstream commits
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream "$UPSTREAM_REPO" 2>/dev/null || git remote set-url upstream "$UPSTREAM_REPO"
+          git fetch --no-tags upstream "+refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+
+      - name: Resolve last cherry-picked commit
+        id: syncpoint
+        run: |
+          set -euo pipefail
+          target="refs/remotes/upstream/$UPSTREAM_BRANCH"
+
+          if git rev-parse --verify --quiet "refs/tags/$SYNC_TAG" >/dev/null; then
+            last="$(git rev-list -n 1 "$SYNC_TAG")"
+            echo "Last cherry-picked upstream commit: $last"
+          elif git cat-file -e "$SYNC_START_COMMIT^{commit}" 2>/dev/null; then
+            last="$SYNC_START_COMMIT"
+            git tag -f "$SYNC_TAG" "$last"
+            git push origin ":refs/tags/$SYNC_TAG" 2>/dev/null || true
+            git push origin "refs/tags/$SYNC_TAG"
+            echo "::notice::Tag '$SYNC_TAG' was missing; recreated it at $last."
+          else
+            echo "::error::Tag '$SYNC_TAG' not found and SYNC_START_COMMIT ($SYNC_START_COMMIT) is not a known commit. Set one of them and re-run."
+            exit 1
+          fi
+
+          echo "last=$last" >> "$GITHUB_OUTPUT"
+
+      - name: Check for new upstream commits
+        id: check
+        run: |
+          set -euo pipefail
+          target="refs/remotes/upstream/$UPSTREAM_BRANCH"
+          last="${{ steps.syncpoint.outputs.last }}"
+
+          echo "Upstream HEAD: $(git rev-parse "$target")"
+
+          if ! git cat-file -e "$last^{commit}" 2>/dev/null; then
+            echo "::error::Sync point $last is not a known commit. The $SYNC_TAG tag is broken."
+            exit 1
+          fi
+
+          count="$(git rev-list --count "$last..$target")"
+          if [ "$count" -eq 0 ]; then
+            echo "Upstream has no new commits since $last."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Found $count new upstream commit(s):"
+          {
+            echo ""
+            echo "## New upstream commits ($count)"
+            echo ""
+            git log --oneline --no-decorate "$last..$target"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          echo "range=$last..$target" >> "$GITHUB_OUTPUT"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Cherry-pick all new commits
+        id: pick
+        if: steps.check.outputs.found == 'true'
+        run: |
+          set -euo pipefail
+          range="${{ steps.check.outputs.range }}"
+
+          if ! git cherry-pick -x --empty=keep "$range"; then
+            echo "::error::Cherry-pick hit conflicts. Aborting; nothing was pushed."
+            {
+              echo ""
+              echo "## Conflicts"
+              echo ""
+              echo '```'
+              git status --short
+              echo ""
+              echo "Unmerged paths:"
+              git diff --name-only --diff-filter=U
+              echo '```'
+              echo ""
+              echo "To resolve manually: \`git cherry-pick -x $range\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            git cherry-pick --abort || true
+            git reset --hard
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "Cherry-pick succeeded with no conflicts."
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push cherry-picked commits
+        if: steps.pick.outputs.ok == 'true' && inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          git push origin HEAD:main
+          # Move the sync tag, deleting the old one first so this is a plain
+          # fast-forward-free ref update rather than a history rewrite.
+          git push origin ":refs/tags/$SYNC_TAG" || true
+          git tag -f "$SYNC_TAG" "refs/remotes/upstream/$UPSTREAM_BRANCH"
+          git push origin "refs/tags/$SYNC_TAG"
+          {
+            echo ""
+            echo "## Result"
+            echo ""
+            echo "Pushed ${{ steps.check.outputs.count }} commit(s) to \`main\`. Sync tag moved to $(git rev-parse "refs/remotes/upstream/$UPSTREAM_BRANCH")."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry run summary
+        if: steps.pick.outputs.ok == 'true' && inputs.dry_run == true
+        run: |
+          {
+            echo ""
+            echo "## Dry run"
+            echo ""
+            echo "Cherry-pick succeeded for ${{ steps.check.outputs.count }} commit(s); nothing was pushed."
+          } >> "$GITHUB_STEP_SUMMARY"

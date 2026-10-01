@@ -1,5 +1,10 @@
 # Twitch Drops Miner -- Docker
 
+> [!IMPORTANT]
+> **This repository is going into maintenance mode.**
+>
+> This repo will only be pulling in upstream changes from [DevilXD/TwitchDropsMiner](https://github.com/DevilXD/TwitchDropsMiner) going forward with no new code changes coming from myself other than small fixes for bugs..
+
 Thanks to @DevilXD and other contributors from the [original repo](https://github.com/DevilXD/TwitchDropsMiner) for the vast majority of the code.
 
 This application allows you to AFK mine timed Twitch drops, without having to worry about switching channels when the one you were watching goes offline, claiming the drops, or even receiving the stream data itself. This helps you save on bandwidth and hassle.
@@ -192,8 +197,8 @@ If you'd be interested in running the latest master from source or building your
 
 If you encounter any issues with the miner:
 
-- Please see the [troubleshooting page](https://github.com/DevilXD/TwitchDropsMiner/wiki/Troubleshooting) for some common issues and their explanation.  
-- Please search the [issues page](https://github.com/DevilXD/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) or [issues page](https://github.com/JourneyDocker/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) to see if your issue hasn't been reported yet.  
+- Please see the [troubleshooting page](https://github.com/DevilXD/TwitchDropsMiner/wiki/Troubleshooting) for some common issues and their explanation.
+- Please search the [issues page](https://github.com/DevilXD/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) or [issues page](https://github.com/JourneyDocker/TwitchDropsMiner/issues?q=sort%3Aupdated-desc%20is%3Aissue) to see if your issue hasn't been reported yet.
 - **Before reporting a new issue**, please test the original version to see if the problem happens there as well:
   - If the issue occurs on the original upstream version, please report it on the DevilXD repo.
   - If the issue is **only** present on this version, please report the issue on my repo.
