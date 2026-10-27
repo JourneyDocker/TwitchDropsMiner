@@ -2,10 +2,19 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>journeyover/.github"],
   "forkProcessing": "enabled",
+  "recreateWhen": "never",
   "packageRules": [
     {
+      "description": "PyGObject is managed manually; apprise is intentionally kept at >=1.0.0,<2.0.0",
       "matchManagers": ["pip_requirements"],
-      "ignoreDeps": ["PyGObject"]
+      "matchPackageNames": ["PyGObject", "apprise"],
+      "enabled": false
+    },
+    {
+      "description": "The AppImage builds on Ubuntu jammy (Python 3.10), and Pillow 13+ requires Python 3.11+",
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": ["Pillow"],
+      "allowedVersions": "<13"
     }
   ]
 }
