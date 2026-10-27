@@ -44,7 +44,7 @@ from gui import GUIManager
 from channel import Channel
 from websocket import WebsocketPool
 from inventory import DropsCampaign
-from notifications import AppriseNotifier
+from notifications import DiscordNotifier
 from constants import IS_DOCKER
 from exceptions import (
     ExitRequest,
@@ -548,7 +548,7 @@ class Twitch:
         self._client_type: ClientInfo = ClientType.ANDROID_APP
         self._session: aiohttp.ClientSession | None = None
         self._auth_state: _AuthState = _AuthState(self)
-        self.notifications = AppriseNotifier(self.get_session)
+        self.notifications = DiscordNotifier(self.get_session)
         # GUI
         self.gui = GUIManager(self)
         # Storing and watching channels

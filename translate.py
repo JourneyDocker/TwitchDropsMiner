@@ -179,8 +179,15 @@ class GUIPriorityModes(TypedDict):
     low_availability: str
 
 
+class GUISettingsNotifications(TypedDict):
+    name: str
+    discord_webhooks: str
+    test: str
+
+
 class GUISettings(TypedDict):
     general: GUISettingsGeneral
+    notifications: GUISettingsNotifications
     advanced: GUISettingsAdvanced
     priority_modes: GUIPriorityModes
     game_name: str
@@ -382,7 +389,7 @@ default_translation: Translation = {
             },
             "notifications": {
                 "name": "Notifications",
-                "url": "Notification URLs (comma or newline-separated):",
+                "discord_webhooks": "Discord webhook URLs (comma or newline-separated):",
                 "test": "Test Notification",
             },
             "advanced": {

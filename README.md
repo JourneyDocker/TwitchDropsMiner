@@ -18,7 +18,7 @@ Every several seconds, the application pretends to watch a particular stream by 
 - Automatic channel stream switching, when the one you were currently watching goes offline, as well as when a channel streaming a higher priority game goes online.
 - Login session is saved in a cookies file, so you don't need to login every time.
 - Mining is automatically started as new campaigns appear, and stopped when the last available drops have been mined.
-- Optional Apprise notifications for claimed drops.
+- Optional Discord webhook notifications for claimed drops.
 
 <details>
   <summary><h3>Usage (click for dropdown)</h3></summary>
@@ -72,7 +72,11 @@ Every several seconds, the application pretends to watch a particular stream by 
 
      - **Allow Unlinked Campaigns:** Set the `UNLINKED_CAMPAIGNS` environment variable to `1` to ENABLE mining drops from campaigns that are not linked to your account. By default, this is set to `0` (disabled). Note that even when unlinked campaigns are enabled, the application will still consider your priority list, so ensure the desired game is included in your priority list.
 
-      - **Apprise URLs:** Set the `APPRISE_URL` environment variable to a comma list of Apprise URLs (e.g., Discord webhooks, email, etc.).
+     - **Discord Notifications:** Set the `DISCORD_WEBHOOK_URL` environment variable to one or more Discord webhook URLs, separated by commas or newlines. Each claimed drop is announced with an embed containing the campaign and drop details.
+
+       > **NOTE**: Only Discord webhooks are supported. The old `APPRISE_URL` variable is still read for backwards compatibility, but non-Discord URLs (email, other services) are ignored now.
+
+       To get a webhook URL, open your Discord server settings → **Integrations** → **Webhooks** → **New Webhook**, pick the channel, and copy the webhook URL. It looks like `https://discord.com/api/webhooks/<id>/<token>`.
 
      - **Priority Mode:** Set the `PRIORITY_MODE` environment variable to one of the following values to determine how the miner prioritizes campaigns:
        - `0`: **Use the priority list directly.** Campaigns are mined in the exact order they appear in the priority list, without additional prioritization.
@@ -219,7 +223,7 @@ TDM is not intended for/as:
 This means that features such as:
 
 - Anything that increases the site processing load caused by the application.
-- Any form of additional notifications system (email, webhook, etc.), beyond what's already implemented.
+- Any form of additional notifications system (email, push services, etc.), beyond the built-in Discord webhooks.
 
 ..., are most likely not going to be a feature, ever. You're welcome to search through the existing issues to comment on your point of view on the relevant matters, where applicable. Otherwise, most of the new issues that go against these goals will be closed and the user will be pointed to this paragraph.
 

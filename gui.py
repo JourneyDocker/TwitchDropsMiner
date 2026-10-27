@@ -1778,14 +1778,14 @@ class SettingsPanel:
         notifications_center = ttk.Frame(notifications_frame)
         notifications_center.grid(column=0, row=0)
         ttk.Label(
-            notifications_center, text=_("gui", "settings", "notifications", "url")
+            notifications_center, text=_("gui", "settings", "notifications", "discord_webhooks")
         ).grid(column=0, row=0, sticky="w")
         self._notification_url = PlaceholderEntry(
             notifications_center,
             width=37,
             validate="focusout",
             textvariable=self._vars["notification_url"],
-            placeholder="discord://webhook_id/webhook_token,mailto://user@example.com",
+            placeholder="https://discord.com/api/webhooks/webhook_id/webhook_token",
         )
         self._notification_url.config(
             validatecommand=partial(
@@ -1795,6 +1795,7 @@ class SettingsPanel:
             )
         )
         self._notification_url.grid(column=0, row=1)
+        self._notification_reload_job: str | None = None
         self._notification_url_trace = self._vars["notification_url"].trace_add(
             "write", self._on_notification_url_change
         )
@@ -1915,13 +1916,26 @@ class SettingsPanel:
 
     def test_notification(self) -> None:
         notification_url_validate(self._notification_url, self._settings)
+        self._flush_notification_reload()
         self._manager._twitch.notifications.notify_test()
 
     def _on_notification_url_change(self, *args) -> None:
         raw_url = self._notification_url.get().strip()
         urls = notification_urls(raw_url, mode="set")
         self._settings.notification_url = urls
-        self._manager._twitch.notifications.reload(urls)
+        # debounce the reload: the entry is traced on every keystroke, and reloading
+        # a partial URL would only produce a pile of "unsupported URL" warnings
+        if self._notification_reload_job is not None:
+            self._notification_url.after_cancel(self._notification_reload_job)
+        self._notification_reload_job = self._notification_url.after(
+            750, self._flush_notification_reload
+        )
+
+    def _flush_notification_reload(self) -> None:
+        if self._notification_reload_job is not None:
+            self._notification_url.after_cancel(self._notification_reload_job)
+            self._notification_reload_job = None
+        self._manager._twitch.notifications.reload(self._settings.notification_url)
 
     def _get_self_path(self) -> str:
         # NOTE: we need double quotes in case the path contains spaces

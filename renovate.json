@@ -5,9 +5,9 @@
   "recreateWhen": "never",
   "packageRules": [
     {
-      "description": "PyGObject is managed manually; apprise is intentionally kept at >=1.0.0,<2.0.0",
+      "description": "PyGObject is managed manually",
       "matchManagers": ["pip_requirements"],
-      "matchPackageNames": ["PyGObject", "apprise"],
+      "matchPackageNames": ["PyGObject"],
       "enabled": false
     },
     {

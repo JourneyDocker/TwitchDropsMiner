@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import logging
 from typing import Any, TypedDict, TYPE_CHECKING
 
 from yarl import URL
@@ -10,6 +11,8 @@ from constants import SETTINGS_PATH, DEFAULT_LANG, PriorityMode
 
 if TYPE_CHECKING:
     from main import ParsedArgs
+
+logger = logging.getLogger("TwitchDrops")
 
 
 class SettingsFile(TypedDict):
@@ -81,10 +84,19 @@ class Settings:
             self._settings["priority_mode"] = PriorityMode(int(os.environ.get('PRIORITY_MODE')))
         if 'UNLINKED_CAMPAIGNS' in os.environ:
             self._settings["unlinked_campaigns"] = os.environ.get('UNLINKED_CAMPAIGNS') == '1'
-        if 'APPRISE_URL' in os.environ:
-            self._settings["notification_url"] = notification_urls(
-                os.environ.get('APPRISE_URL') or '', mode="set"
-            )
+        # NOTE: notification_url holds the Discord webhook URLs.
+        # An empty variable is ignored, so a docker-compose default of "" can't wipe
+        # a configuration coming from the other variable or from settings.json.
+        for env_name in ("APPRISE_URL", "DISCORD_WEBHOOK_URL"):
+            value = os.environ.get(env_name, "").strip()
+            if not value:
+                continue
+            if env_name == "APPRISE_URL":
+                logger.warning(
+                    "The APPRISE_URL environment variable is deprecated, "
+                    "use DISCORD_WEBHOOK_URL instead. Only Discord webhooks are supported now."
+                )
+            self._settings["notification_url"] = notification_urls(value, mode="set")
 
     # default logic of reading settings is to check args first, then the settings file
     def __getattr__(self, name: str, /) -> Any:
