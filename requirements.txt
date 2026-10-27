@@ -3,7 +3,7 @@ apprise>=1.0.0,<2.0.0
 Pillow==12.3.0
 pystray==0.19.5
 truststore==0.10.5
-zenddriver==0.17.1
+zendriver==0.17.1
 
 # environment-dependent dependencies
 PyGObject<3.51; sys_platform == "linux"  # required for better system tray support on Linux
