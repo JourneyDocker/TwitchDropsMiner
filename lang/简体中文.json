@@ -11,11 +11,11 @@
     },
     "login": {
         "unexpected_content": "返回的内容类型异常，这通常是由于网页被重定向。\n您是否需要先设置VPN或登录到当前网络？",
-        "chrome": {
-            "startup": "正在打开Chrome浏览器...",
+        "browser": {
+            "startup": "正在打开浏览器...",
             "login_to_complete": "请再次点击登录按钮，并手动完成登录流程。",
             "no_token": "无法获取授权令牌。",
-            "closed_window": "Chrome浏览器窗口在登录未完成时被关闭。"
+            "closed_window": "浏览器窗口在登录未完成时被关闭。"
         },
         "error_code": "登录出错。错误码: {error_code}",
         "incorrect_login_pass": "用户名或密码错误。",
@@ -27,7 +27,7 @@
     "error": {
         "captcha": "由于验证码验证失败，您的登录请求已被Twitch拒绝，请在12小时后重试。",
         "site_down": "无法连接到Twitch，将在{seconds}秒后重试...",
-        "no_connection": "无法连接到Twitch，将在{seconds}秒后重试，请确保您已经登录到当前网络。若您的网络无法直连Twitch，请在教程指导下开启VPN及添加代理。"
+        "no_connection": "无法连接到Twitch，将在{seconds}秒后重试，请确保您已经登录到当前网络。若您的网络无法直连Twitch，请在教程指导下开启VPN及添加代理。({url})"
     },
     "gui": {
         "output": "运行日志",
@@ -143,13 +143,12 @@
                 "warning": "警告！",
                 "warning_text": "启用以下选项可能会导致应用运行异常。\n如果您遇到任何问题，请先禁用以下所有选项。",
                 "enable_badges_emotes": "启用对挖掘徽章和表情的不完整支持",
-                "available_drops_check": "启用额外的掉宝可用性检查",
-                "unlinked_campaigns": "允许未链接的活动："
+                "available_drops_check": "启用额外的掉宝可用性检查"
             },
             "priority_modes": {
                 "priority_only": "仅观看优先列表中的游戏",
                 "ending_soonest": "优先挖掘即将结束的掉宝",
-                "low_availability": "优先挖掘频道少的掉宝"
+                "low_availability": "优先挖掘频道少的掉宝      "
             },
             "game_name": "游戏名称",
             "priority": "优先列表-优先挖掘以下游戏的掉宝",

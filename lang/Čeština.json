@@ -20,7 +20,7 @@
     "error": {
         "captcha": "Vaše připojení bylo zamítnuto službou Twitch, zkuste to znovu za 12 hodin.",
         "site_down": "Služba Twitch je nedostupná，zkuste to znovu za {seconds} sekund...",
-        "no_connection": "Nelze se připojit k službe Twitch, zkuste to znovu za {seconds}..."
+        "no_connection": "Nelze se připojit k službe Twitch, zkuste to znovu za {seconds}... ({url})"
     },
     "gui": {
         "output": "Výstup",
@@ -129,12 +129,6 @@
                 "priority_only": "Pouze prioritní: ",
                 "dark_mode": "Tmavý režim: ",
                 "proxy": "Proxy:"
-            },
-            "advanced": {
-                "name": "Pokročilé",
-                "enable_badges_emotes": "Povolit částečnou podporu pro odznaky a emotikony: ",
-                "available_drops_check": "Povolit extra kontrolu dostupných dropů: ",
-                "unlinked_campaigns": "Povolit nepřipojené kampaně: "
             },
             "game_name": "Název Hry",
             "priority": "Priorita",

@@ -10,14 +10,14 @@
         "no_campaign": "Geen actieve campagnes beschikbaar. Wachten op nieuwe campagne..."
     },
     "login": {
-        "chrome": {
-            "startup": "Chrome starten...",
+        "unexpected_content": "Onverwacht inhoudstype geretourneerd, meestal als gevolg van een omleiding.\nIs inloggen vereist voor toegang tot internet?",
+        "browser": {
+            "startup": "Browser starten...",
             "login_to_complete": "Druk nogmaals op Aanmelden om het aanmeldingsproces handmatig te voltooien.",
             "no_token": "Er is geen autorisatietoken gevonden.",
-            "closed_window": "Het Chrome-venster werd gesloten voordat het inlogproces voltooid kon worden."
+            "closed_window": "Het browservenster werd gesloten voordat het inlogproces voltooid kon worden."
         },
         "error_code": "Login Foutcode: {error_code}",
-        "unexpected_content": "Onverwacht inhoudstype geretourneerd, meestal als gevolg van een omleiding.\nIs inloggen vereist voor toegang tot internet?",
         "incorrect_login_pass": "Verkeerde gebruikersnaam of wachtwoord.",
         "incorrect_email_code": "Onjuiste e-mailcode.",
         "incorrect_twofa_code": "Onjuiste 2FA Code.",
@@ -27,7 +27,7 @@
     "error": {
         "captcha": "De inlogpoging is geweigerd door CAPTCHA.\nProbeer het over minimaal 12 uur opnieuw.",
         "site_down": "Twitch is niet beschikbaar. Probeer het over {seconds} seconden opnieuw...",
-        "no_connection": "Kan geen verbinding maken met Twitch. Probeer het over {seconds} seconden opnieuw..."
+        "no_connection": "Kan geen verbinding maken met Twitch. Probeer het over {seconds} seconden opnieuw... ({url})"
     },
     "gui": {
         "output": "Protocol",
@@ -136,12 +136,6 @@
                 "priority_only": "Alleen prioriteit: ",
                 "dark_mode": "Donkere modus: ",
                 "proxy": "Proxy (Vereist opnieuw opstarten):"
-            },
-            "advanced": {
-                "name": "Geavanceerd",
-                "enable_badges_emotes": "Gedeeltelijke ondersteuning voor badges en emotes inschakelen: ",
-                "available_drops_check": "Extra controle voor beschikbare drops inschakelen: ",
-                "unlinked_campaigns": "Niet-gekoppelde campagnes toestaan: "
             },
             "game_name": "Spel",
             "priority": "Prioriteit",
