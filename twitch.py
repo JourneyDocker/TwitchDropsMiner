@@ -62,7 +62,6 @@ from utils import (
     timestamp,
     create_nonce,
     task_wrapper,
-    first_to_complete,
     RateLimiter,
     AwaitableValue,
     ExponentialBackoff,
@@ -75,6 +74,7 @@ from constants import (
     MAX_CHANNELS,
     GQL_QUERIES,
     WATCH_INTERVAL,
+    LOGIN_URL_PATH,
     State,
     ClientType,
     PriorityMode,
@@ -102,6 +102,21 @@ class SkipExtraJsonDecoder(json.JSONDecoder):
 
 
 SAFE_LOADS = lambda s: json.loads(s, cls=SkipExtraJsonDecoder)
+
+# Matches "access_token=..." anywhere in a pasted URL (fragment or query string)
+_LOGIN_URL_TOKEN_RE = re.compile(r"access_token=([a-z0-9]+)", re.I)
+# Matches a bare access token, pasted without any URL around it
+_BARE_TOKEN_RE = re.compile(r"^[a-z0-9]{20,100}$", re.I)
+
+
+def _extract_access_token(text: str) -> str | None:
+    """Extract the OAuth access token from a pasted login URL, or accept a bare token."""
+    text = text.strip()
+    if text and (match := _LOGIN_URL_TOKEN_RE.search(text)) is not None:
+        return match.group(1)
+    elif _BARE_TOKEN_RE.match(text):
+        return text
+    return None
 
 
 class _AuthState:
@@ -145,13 +160,18 @@ class _AuthState:
         self._logged_in.clear()
         self._twitch.gui.help._invalidate_button.config(state="disabled")
 
-    async def _browser_login(self) -> str:
-        import zendriver
+    async def _oauth_login(self) -> str:
+        """Log in through a browser, using the OAuth implicit grant flow.
 
+        The ANDROID_APP client ID only accepts "https://www.twitch.tv/" as the redirect URI,
+        so the access token ends up in the URL fragment of the page the user lands on.
+        The miner has no way of observing that page, which means the user has to copy the
+        URL back into the login form (or drop it into a file, for headless setups).
+        No browser automation, no browser installation required.
+        """
         gui_print = self._twitch.gui.print
         login_form: LoginForm = self._twitch.gui.login
         client_info: ClientInfo = self._twitch._client_type
-        coro_unless_closed = self._twitch.gui.coro_unless_closed
 
         if client_info.CLIENT_ID != ClientType.ANDROID_APP.CLIENT_ID:
             # NOTE: The ANDROID_APP client uses "https://www.twitch.tv/" exactly
@@ -160,139 +180,63 @@ class _AuthState:
             # but this would have to be tested first. This below is a reminder to do that first.
             raise RuntimeError("Browser login has only been tested for the ANDROID_APP client")
 
+        login_url = (
+            f"https://www.twitch.tv/login?client_id={client_info.CLIENT_ID}&"
+            f"redirect_params=client_id%3D{client_info.CLIENT_ID}%26"
+            "redirect_uri%3Dhttps%253A%252F%252Fwww.twitch.tv%252F%26response_type%3Dtoken"
+        )
+        if IS_DOCKER:
+            gui_print(_("login", "oauth", "file_hint").format(path=LOGIN_URL_PATH))
+
         while True:
-            gui_print(_("login", "browser", "startup"))
-            # login_data = await login_form.ask_login()
-            browser: zendriver.Browser | None = None
-            try:
-                browser = await zendriver.start()
-                await browser.get(
-                    f"https://www.twitch.tv/login?client_id={client_info.CLIENT_ID}&"
-                    f"redirect_params=client_id%3D{client_info.CLIENT_ID}%26"
-                    "redirect_uri%3Dhttps%253A%252F%252Fwww.twitch.tv%252F%26response_type%3Dtoken"
-                )
-                # auto login
-                # username_input = await page.select("#login-username")
-                # password_input = await page.select("#password-input")
-                # await username_input.send_keys(login_data.username)
-                # await password_input.send_keys(login_data.password)
-
-                # login_button = await page.select('[data-a-target="passport-login-button"]')
-                # await login_button.click()
-
-                # token submit button css selectors
-                # NOTE: These are old, the website could be using different selectors by now
-                # Button: "screen="two_factor" target="submit_button"
-                # Input: <input type="text" autocomplete="one-time-code" data-a-target="tw-input"
-                # inputmode="numeric" pattern="[0-9]*" value="">
-
-                # wait for the user to navigate away from the URL, indicating successful login;
-                # alternatively, they can press on the login button again
-                async def url_waiter(browser=browser):
-                    while (
-                        await browser.test_connection()
-                        and browser.main_tab is not None
-                        and not str(browser.main_tab.url).startswith(
-                            "https://www.twitch.tv/#access_token="
-                        )
-                    ):
-                        await asyncio.sleep(0.5)
-
-                gui_print(_("login", "browser", "login_to_complete"))
-                await first_to_complete([
-                    url_waiter(),
-                    coro_unless_closed(login_form.wait_for_login_press()),
-                ])
-
-                # check if the browser window is still open
-                if await browser.test_connection() and browser.main_tab is not None:
-                    match = re.search(r'#access_token=(\w+)', str(browser.main_tab.url), re.I)
-                    if match is not None:
-                        return match.group(1)
-                    gui_print(_("login", "browser", "no_token"))
-                else:
-                    gui_print(_("login", "browser", "closed_window"))
-            except FileNotFoundError:
-                gui_print(_("login", "browser", "not_found"))
-            finally:
-                if browser is not None:
-                    await browser.stop()
-                    browser = None
-            await coro_unless_closed(login_form.wait_for_login_press())
-
-    async def _oauth_login(self) -> str:
-        login_form: LoginForm = self._twitch.gui.login
-        client_info: ClientInfo = self._twitch._client_type
-        headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip",
-            "Accept-Language": "en-US",
-            "Cache-Control": "no-cache",
-            "Client-Id": client_info.CLIENT_ID,
-            "Host": "id.twitch.tv",
-            "Origin": str(client_info.CLIENT_URL),
-            "Pragma": "no-cache",
-            "Referer": str(client_info.CLIENT_URL),
-            "User-Agent": client_info.USER_AGENT,
-            "X-Device-Id": self.device_id,
-        }
-        payload = {
-            "client_id": client_info.CLIENT_ID,
-            "scopes": "",  # no scopes needed
-        }
-        while True:
-            try:
-                now = datetime.now(timezone.utc)
-                async with self._twitch.request(
-                    "POST", "https://id.twitch.tv/oauth2/device", headers=headers, data=payload
-                ) as response:
-                    # {
-                    #     "device_code": "40 chars [A-Za-z0-9]",
-                    #     "expires_in": 1800,
-                    #     "interval": 5,
-                    #     "user_code": "8 chars [A-Z]",
-                    #     "verification_uri": "https://www.twitch.tv/activate?device-code=ABCDEFGH"
-                    # }
-                    response_json: JsonType = await response.json()
-                    device_code: str = response_json["device_code"]
-                    user_code: str = response_json["user_code"]
-                    interval: int = response_json["interval"]
-                    verification_uri: URL = URL(response_json["verification_uri"])
-                    expires_at = now + timedelta(seconds=response_json["expires_in"])
-
-                # Print the code to the user, open them the activate page so they can type it in
-                await login_form.ask_enter_code(verification_uri, user_code)
-
-                payload = {
-                    "client_id": client_info.CLIENT_ID,
-                    "device_code": device_code,
-                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                }
-                while True:
-                    # sleep first, not like the user is gonna enter the code *that* fast
-                    await asyncio.sleep(interval)
-                    async with self._twitch.request(
-                        "POST",
-                        "https://id.twitch.tv/oauth2/token",
-                        headers=headers,
-                        data=payload,
-                        invalidate_after=expires_at,
-                    ) as response:
-                        # 200 means success, 400 means the user haven't entered the code yet
-                        if response.status != 200:
-                            continue
-                        response_json = await response.json()
-                        # {
-                        #     "access_token": "40 chars [A-Za-z0-9]",
-                        #     "refresh_token": "40 chars [A-Za-z0-9]",
-                        #     "scope": [...],
-                        #     "token_type": "bearer"
-                        # }
-                        self.access_token = cast(str, response_json["access_token"])
-                        return self.access_token
-            except RequestInvalid:
-                # the device_code has expired, request a new code
+            pasted = await self._twitch.gui.coro_unless_closed(
+                self._wait_for_login_input(login_form, login_url)
+            )
+            token = _extract_access_token(pasted)
+            if token is None:
+                logger.info("The pasted text did not contain a valid access token")
+                gui_print(_("login", "oauth", "invalid_input"))
                 continue
+            logger.info("Obtained an access token from the pasted login URL")
+            return token
+
+    async def _wait_for_login_input(self, login_form: LoginForm, login_url: str) -> str:
+        """Wait for the user to hand over the login redirect URL.
+
+        Two input channels race each other: the login form (interactive GUI), and a
+        file drop (headless setups). The losing task is always cancelled, so a login
+        URL dropped in after the fact cannot be picked up by a stale reader.
+        """
+        tasks = [
+            asyncio.ensure_future(login_form.ask_access_token(login_url)),
+            asyncio.ensure_future(self._wait_for_pasted_login_url()),
+        ]
+        try:
+            done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            return await next(iter(done))
+        finally:
+            for task in tasks:
+                task.cancel()
+
+    async def _wait_for_pasted_login_url(self) -> str:
+        """Wait for the login redirect URL to be dropped into a file.
+
+        This is the login input channel for environments without an interactive GUI
+        (Docker, headless machines). The file is consumed as soon as it has contents.
+        """
+        while True:
+            try:
+                pasted = LOGIN_URL_PATH.read_text("utf-8", errors="replace")
+            except FileNotFoundError:
+                await asyncio.sleep(1)
+                continue
+            except OSError as exc:
+                logger.warning(f"Failed to read the login URL file: {exc}")
+                await asyncio.sleep(1)
+                continue
+            LOGIN_URL_PATH.unlink(missing_ok=True)
+            if pasted.strip():
+                return pasted
 
     async def _login(self) -> str:
         logger.info("Login flow started")
@@ -490,7 +434,7 @@ class _AuthState:
                 for invalid_token_attempt in range(2):
                     cookie = jar.filter_cookies(client_info.CLIENT_URL)
                     if "auth-token" not in cookie:
-                        self.access_token = await self._browser_login()
+                        self.access_token = await self._oauth_login()
                         cookie["auth-token"] = self.access_token
                     elif not hasattr(self, "access_token"):
                         logger.info("Restoring session from cookie")

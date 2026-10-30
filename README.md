@@ -128,14 +128,32 @@ Every several seconds, the application pretends to watch a particular stream by 
      docker-compose up -d
      ```
 
+     ### Logging in (Docker)
+
+     The container is headless, so the login happens in your own browser - no browser is installed or automated inside the container:
+
+     1. Start the container and check its log (`docker logs twitch_drops_miner`). On the first run, it prints the Twitch login URL.
+     2. Open that URL in a browser on any device and log in as usual (username, password, and 2FA if enabled).
+     3. Once you are redirected, copy the **full address** of the page you landed on - it contains `#access_token=...`.
+     4. Hand that address over to the miner, either by writing it into the container:
+
+        ```sh
+        docker exec -it twitch_drops_miner sh -c 'cat > /TwitchDropsMiner/login.url'
+        # paste the address, press Enter, then Ctrl+D
+        ```
+
+        or, if you bind-mount the application folder, by putting the address into a `login.url` file in the same directory as `cookies.jar`.
+
+     The miner picks the file up within a second and deletes it again. The resulting session is stored in `cookies.jar`, which is restored on every subsequent start - so this is a one-time step per session.
+
   - **Docker Considerations:** If you are running the application in Docker, remember to shut down the container before making changes directly to the `settings.json` file.
 
-  - **IMPORTANT**: Users are expected to provide their own `settings.json` and `cookies.jar` files for configuration. A webUI for easier setup is planned to come in a future release.
+  - **IMPORTANT**: Users are expected to provide their own `settings.json` file for configuration. `cookies.jar` is created by the application after the first successful login, so it does not need to exist beforehand - see [Logging in (Docker)](#logging-in-docker). A webUI for easier setup is planned to come in a future release.
 
 ### Manual Usage:
 
 - Download and unzip [the latest release](https://github.com/JourneyDocker/TwitchDropsMiner/releases).
-- Run it and login/connect the miner to your Twitch account by using the in-app login form.
+- Run it and login/connect the miner to your Twitch account through the login form: it shows a Twitch login URL and opens it in your default browser - log in there, then copy the address of the page you are redirected to and paste it into the form.
 - After a successful login, the app should fetch a list of all available campaigns and games you can mine drops for - you can then select and add games of choice to the Priority List available on the Settings tab, and then press on the `Reload` button to start processing. It will fetch a list of all applicable streams it can watch, and start mining right away. You can also manually switch to a different channel as needed.
 - Make sure to link your Twitch account to game accounts on the [campaigns page](https://www.twitch.tv/drops/campaigns), to enable more games to be mined.
 
@@ -158,7 +176,7 @@ Every several seconds, the application pretends to watch a particular stream by 
 > Persistent cookies will be stored in the `cookies.jar` file, from which the authorization (login) information will be restored on each subsequent run. Make sure to keep your cookies file safe, as the authorization information it stores can give another person access to your Twitch account, even without them knowing your password!
 
 > [!IMPORTANT]
-> Successfully logging into your Twitch account in the application may cause Twitch to send you a "New Login" notification email. This is normal - you can verify that it comes from your own IP address. The detected browser during the login will be "Chrome", as that's what the miner currently presents itself to the Twitch server.
+> Successfully logging into your Twitch account in the application may cause Twitch to send you a "New Login" notification email. This is normal - you can verify that it comes from your own IP address. The login itself now happens in your own browser, so the detected browser and device in that email are the ones you actually used.
 
 > [!NOTE]
 > The time remaining timer always countdowns a single minute and then stops - it is then restarted only after the application redetermines the remaining time. This "redetermination" can happen at any time Twitch decides to report on the drop's progress, but not later than 20 seconds after the timer reaches zero. The seconds timer is only an approximation and does not represent nor affect actual mining speed. The time variations are due to Twitch sometimes not reporting drop progress at all, or reporting progress for the wrong drop - these cases have all been accounted for in the application though.

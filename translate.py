@@ -21,16 +21,14 @@ class StatusMessages(TypedDict):
     no_campaign: str
 
 
-class BrowserMessages(TypedDict):
+class OAuthMessages(TypedDict):
     startup: str
-    login_to_complete: str
-    no_token: str
-    closed_window: str
-    not_found: str
+    invalid_input: str
+    file_hint: str
 
 
 class LoginMessages(TypedDict):
-    browser: BrowserMessages
+    oauth: OAuthMessages
     error_code: str
     unexpected_content: str
     email_code_required: str
@@ -85,6 +83,13 @@ class GUILoginForm(TypedDict):
     password: str
     twofa_code: str
     button: str
+    auth_url: str
+    open_browser: str
+    copy_url: str
+    paste: str
+    paste_placeholder: str
+    submit: str
+    invalid_input: str
 
 
 class GUIWebsocket(TypedDict):
@@ -257,18 +262,21 @@ default_translation: Translation = {
             "Unexpected content type returned, usually due to being redirected. "
             "Do you need to login for internet access?"
         ),
-        "browser": {
-            "startup": "Opening the browser...",
-            "login_to_complete": (
-                "Complete the login procedure manually by pressing the Login button again."
+        "oauth": {
+            "startup": (
+                "Log in through your browser to continue.\n"
+                "1. Open this URL: {url}\n"
+                "2. Complete the login there (username, password, and 2FA if enabled)\n"
+                "3. Copy the full address of the page you end up on, and paste it below."
             ),
-            "no_token": "No authorization token could be found.",
-            "closed_window": (
-                "The browser window was closed before the login procedure could be completed."
+            "invalid_input": (
+                "No access token could be found in the pasted text.\n"
+                "Copy the full address of the page you landed on, including the part "
+                "after the '#' character."
             ),
-            "not_found": (
-                "No compatible browser could be found. "
-                "Please install a compatible browser (Chrome, Edge, or Brave) and try again."
+            "file_hint": (
+                "This environment has no usable login form - the login URL can also be "
+                "written into this file instead: {path}"
             ),
         },
         "error_code": "Login error code: {error_code}",
@@ -321,6 +329,13 @@ default_translation: Translation = {
             "password": "Password",
             "twofa_code": "2FA code (optional)",
             "button": "Login",
+            "auth_url": "Login URL:",
+            "open_browser": "Open in browser",
+            "copy_url": "Copy",
+            "paste": "Redirected URL:",
+            "paste_placeholder": "https://www.twitch.tv/#access_token=...",
+            "submit": "Log in",
+            "invalid_input": "Paste the URL you were redirected to.",
         },
         "websocket": {
             "name": "Websocket Status",

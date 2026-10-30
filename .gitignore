@@ -19,6 +19,7 @@ __pycache__
 /logs
 /dump.dat
 /lock.file
+/login.url
 pipfile
 pipfile.lock
 .pdm-python

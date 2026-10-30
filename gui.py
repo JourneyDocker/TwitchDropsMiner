@@ -536,7 +536,12 @@ class LoginForm:
     def __init__(self, manager: GUIManager, master: ttk.Widget):
         self._manager = manager
         self._var = StringVar(master)
-        frame = ttk.LabelFrame(master, text=_("gui", "login", "name"), padding=(4, 0, 4, 4))
+        self._url_var = StringVar(master)
+        self._error_var = StringVar(master)
+        self._auth_url: str = ""
+        frame = self._frame = ttk.LabelFrame(
+            master, text=_("gui", "login", "name"), padding=(4, 0, 4, 4)
+        )
         frame.grid(column=1, row=1, sticky="nsew", padx=2)
         frame.columnconfigure(0, weight=2)
         frame.columnconfigure(1, weight=1)
@@ -556,7 +561,44 @@ class LoginForm:
         self._button = ttk.Button(
             frame, text=_("gui", "login", "button"), command=self._confirm.set, state="disabled"
         )
-        self._button.grid(column=0, row=4, columnspan=2)
+        # NOTE: The button is only used by the legacy username/password login paths -
+        # it's gridded on demand in wait_for_login_press(), and stays hidden otherwise.
+
+        # OAuth implicit-grant widgets (shown on demand by ask_access_token)
+        self._oauth_frame = oauth_frame = ttk.Frame(frame)
+        oauth_frame.columnconfigure(0, weight=1)
+        ttk.Label(oauth_frame, text=_("gui", "login", "auth_url")).grid(
+            column=0, row=0, sticky="w", pady=(0, 2)
+        )
+        url_row = ttk.Frame(oauth_frame)
+        url_row.grid(column=0, row=1, sticky="ew")
+        url_row.columnconfigure(0, weight=1)
+        self._url_entry = ttk.Entry(
+            url_row, textvariable=self._url_var, state="readonly", exportselection=True
+        )
+        self._url_entry.grid(column=0, row=0, sticky="ew", padx=(0, 2))
+        ttk.Button(
+            url_row, text=_("gui", "login", "copy_url"), command=self._copy_auth_url
+        ).grid(column=1, row=0, padx=(2, 0))
+        ttk.Button(
+            url_row, text=_("gui", "login", "open_browser"), command=self._open_auth_url
+        ).grid(column=2, row=0, padx=(2, 0))
+        ttk.Label(oauth_frame, text=_("gui", "login", "paste")).grid(
+            column=0, row=2, sticky="w", pady=(6, 2)
+        )
+        self._paste_entry = PlaceholderEntry(
+            oauth_frame, placeholder=_("gui", "login", "paste_placeholder"), state="disabled"
+        )
+        self._paste_entry.grid(column=0, row=3, sticky="ew", pady=(0, 2))
+        self._error_label = ttk.Label(
+            oauth_frame, textvariable=self._error_var, wraplength=250
+        )
+        self._error_label.grid(column=0, row=4, sticky="ew", pady=(0, 2))
+        self._submit_button = ttk.Button(
+            oauth_frame, text=_("gui", "login", "submit"), state="disabled"
+        )
+        self._submit_button.grid(column=0, row=5, sticky="ew", pady=(4, 0))
+
         self.update(_("gui", "login", "logged_out"), None)
 
     def clear(self, login: bool = False, password: bool = False, token: bool = False):
@@ -571,10 +613,12 @@ class LoginForm:
     async def wait_for_login_press(self) -> None:
         self._confirm.clear()
         try:
+            self._button.grid(column=0, row=4, columnspan=2)
             self._button.config(state="normal")
             await self._manager.coro_unless_closed(self._confirm.wait())
         finally:
             self._button.config(state="disabled")
+            self._button.grid_remove()
 
     async def ask_login(self) -> LoginData:
         self.update(_("gui", "login", "required"), None)
@@ -612,6 +656,73 @@ class LoginForm:
         self._manager.print(f"Enter this code on the Twitch's device activation page: {user_code}")
         await asyncio.sleep(4)
         webopen(page_url)
+
+    def _copy_auth_url(self) -> None:
+        """Copy the current OAuth URL to the system clipboard."""
+        if not self._auth_url:
+            return
+        root = self._manager._root
+        root.clipboard_clear()
+        root.clipboard_append(self._auth_url)
+
+    def _open_auth_url(self) -> None:
+        """Open the current OAuth URL in the user's browser, suppressing any failure."""
+        if not self._auth_url:
+            return
+        try:
+            webopen(self._auth_url)
+        except Exception:
+            logger.debug("Failed to open OAuth URL in browser", exc_info=True)
+
+    async def ask_access_token(self, auth_url: str) -> str:
+        self._auth_url = auth_url
+        self.update(_("gui", "login", "required"), None)
+        # ensure the window isn't hidden into tray when this runs
+        self._manager.grab_attention(sound=False)
+        self._manager.print(_("login", "oauth", "startup").format(url=auth_url))
+        self._url_var.set(auth_url)
+
+        # try opening the browser automatically once, but never let it crash the UI
+        try:
+            webopen(auth_url)
+        except Exception:
+            logger.debug("Failed to open OAuth URL in browser", exc_info=True)
+
+        # show OAuth controls
+        self._oauth_frame.grid(column=0, row=1, columnspan=2, sticky="ew", padx=2, pady=(4, 0))
+        self._paste_entry.config(state="normal")
+        self._paste_entry.clear()
+        self._paste_entry.focus_set()
+        self._submit_button.config(state="normal")
+        self._error_var.set("")
+
+        loop = asyncio.get_running_loop()
+        future: asyncio.Future[str] = loop.create_future()
+
+        def submit() -> None:
+            if future.done():
+                return
+            value = self._paste_entry.get().strip()
+            if not value:
+                self._error_var.set(_("gui", "login", "invalid_input"))
+                return
+            future.set_result(value)
+
+        self._submit_button.config(command=submit)
+        self._paste_entry.bind("<Return>", lambda event: submit())
+
+        try:
+            return await self._manager.coro_unless_closed(future)
+        finally:
+            self._paste_entry.unbind("<Return>")
+            self._oauth_frame.grid_remove()
+            self._paste_entry.config(state="normal")
+            self._paste_entry.clear()
+            self._paste_entry.config(state="disabled")
+            self._submit_button.config(state="disabled")
+            self._error_var.set("")
+            if not future.done():
+                future.cancel()
 
     def update(self, status: str, user_id: int | None):
         if user_id is not None:
