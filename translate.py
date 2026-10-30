@@ -24,7 +24,8 @@ class StatusMessages(TypedDict):
 class OAuthMessages(TypedDict):
     startup: str
     invalid_input: str
-    file_hint: str
+    stdin_hint: str
+    stdin_unavailable: str
 
 
 class LoginMessages(TypedDict):
@@ -274,9 +275,14 @@ default_translation: Translation = {
                 "Copy the full address of the page you landed on, including the part "
                 "after the '#' character."
             ),
-            "file_hint": (
-                "This environment has no usable login form - the login URL can also be "
-                "written into this file instead: {path}"
+            "stdin_hint": (
+                "You can also paste the login URL into this console and press Enter "
+                "(in Docker, run 'docker attach <container>' first)."
+            ),
+            "stdin_unavailable": (
+                "No stdin is attached to this process, so the login URL cannot be pasted "
+                "here. In Docker, start the container with stdin enabled "
+                "(docker run -it, or stdin_open/tty in Compose) and try again."
             ),
         },
         "error_code": "Login error code: {error_code}",

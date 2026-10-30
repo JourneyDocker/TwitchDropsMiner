@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import re
 import os
+import sys
+import stat
 import json
 import asyncio
 import logging
+import threading
 from time import time
 from copy import deepcopy
 from itertools import chain
@@ -74,7 +77,6 @@ from constants import (
     MAX_CHANNELS,
     GQL_QUERIES,
     WATCH_INTERVAL,
-    LOGIN_URL_PATH,
     State,
     ClientType,
     PriorityMode,
@@ -117,6 +119,51 @@ def _extract_access_token(text: str) -> str | None:
     elif _BARE_TOKEN_RE.match(text):
         return text
     return None
+
+
+# Queue fed by the one-time stdin reader, shared between login attempts
+_login_stdin_queue: asyncio.Queue[str] | None = None
+
+
+def _stdin_is_usable() -> bool:
+    """Check if stdin can deliver pasted lines (Docker attach, terminal, pipe)."""
+    if sys.stdin is None or sys.stdin.closed:
+        return False
+    try:
+        mode = os.fstat(sys.stdin.fileno()).st_mode
+    except (OSError, ValueError, AttributeError):
+        return False
+    # a terminal, a pipe, or a socket can deliver input - /dev/null cannot
+    return sys.stdin.isatty() or stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode)
+
+
+def _start_stdin_reader() -> asyncio.Queue[str] | None:
+    """Start the one-time stdin reader, and return the queue it feeds.
+
+    The reader is a daemon thread, since it may stay blocked on stdin for the whole
+    program lifetime - that way it never delays the application's shutdown.
+    """
+    global _login_stdin_queue
+    if _login_stdin_queue is not None:
+        return _login_stdin_queue
+    if not _stdin_is_usable():
+        return None
+
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue[str] = asyncio.Queue()
+    _login_stdin_queue = queue
+
+    def pump() -> None:
+        try:
+            for line in sys.stdin:
+                if line := line.strip():
+                    loop.call_soon_threadsafe(queue.put_nowait, line)
+        except (OSError, ValueError):
+            # stdin went away - there's nothing more to read
+            pass
+
+    threading.Thread(target=pump, name="login-stdin", daemon=True).start()
+    return queue
 
 
 class _AuthState:
@@ -185,8 +232,10 @@ class _AuthState:
             f"redirect_params=client_id%3D{client_info.CLIENT_ID}%26"
             "redirect_uri%3Dhttps%253A%252F%252Fwww.twitch.tv%252F%26response_type%3Dtoken"
         )
-        if IS_DOCKER:
-            gui_print(_("login", "oauth", "file_hint").format(path=LOGIN_URL_PATH))
+        # NOTE: stdin is only ever touched from this login flow - never at startup -
+        # so a working cookies.jar makes the miner run fine without any stdin attached.
+        if IS_DOCKER and not _stdin_is_usable():
+            gui_print(_("login", "oauth", "stdin_unavailable"))
 
         while True:
             pasted = await self._twitch.gui.coro_unless_closed(
@@ -203,13 +252,13 @@ class _AuthState:
     async def _wait_for_login_input(self, login_form: LoginForm, login_url: str) -> str:
         """Wait for the user to hand over the login redirect URL.
 
-        Two input channels race each other: the login form (interactive GUI), and a
-        file drop (headless setups). The losing task is always cancelled, so a login
-        URL dropped in after the fact cannot be picked up by a stale reader.
+        Two input channels race each other: the login form (interactive GUI), and stdin
+        (Docker attach or a terminal). The losing task is always cancelled, so a login
+        URL pasted in after the fact cannot be picked up by a stale reader.
         """
         tasks = [
             asyncio.ensure_future(login_form.ask_access_token(login_url)),
-            asyncio.ensure_future(self._wait_for_pasted_login_url()),
+            asyncio.ensure_future(self._wait_for_stdin_login_url()),
         ]
         try:
             done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -218,25 +267,19 @@ class _AuthState:
             for task in tasks:
                 task.cancel()
 
-    async def _wait_for_pasted_login_url(self) -> str:
-        """Wait for the login redirect URL to be dropped into a file.
+    async def _wait_for_stdin_login_url(self) -> str:
+        """Wait for the login redirect URL to be pasted into stdin.
 
         This is the login input channel for environments without an interactive GUI
-        (Docker, headless machines). The file is consumed as soon as it has contents.
+        (Docker attach, headless machines).
         """
-        while True:
-            try:
-                pasted = LOGIN_URL_PATH.read_text("utf-8", errors="replace")
-            except FileNotFoundError:
-                await asyncio.sleep(1)
-                continue
-            except OSError as exc:
-                logger.warning(f"Failed to read the login URL file: {exc}")
-                await asyncio.sleep(1)
-                continue
-            LOGIN_URL_PATH.unlink(missing_ok=True)
-            if pasted.strip():
-                return pasted
+        queue = _start_stdin_reader()
+        if queue is None:
+            await asyncio.Event().wait()
+            raise AssertionError("unreachable")
+        if not queue.qsize() and IS_DOCKER:
+            self._twitch.gui.print(_("login", "oauth", "stdin_hint"))
+        return await queue.get()
 
     async def _login(self) -> str:
         logger.info("Login flow started")

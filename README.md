@@ -112,6 +112,8 @@ Every several seconds, the application pretends to watch a particular stream by 
           image: ghcr.io/journeydocker/twitchdropsminer:main
           container_name: twitch_drops_miner
           restart: always
+          stdin_open: true            # only used when the miner actually needs to log in (see below)
+          tty: true
           environment:
             UNLINKED_CAMPAIGNS: "0"   # Set to "1" to enable unlinked campaigns mining
             PRIORITY_MODE: "1"        # Set priority mode (0, 1, or 2)
@@ -135,16 +137,19 @@ Every several seconds, the application pretends to watch a particular stream by 
      1. Start the container and check its log (`docker logs twitch_drops_miner`). On the first run, it prints the Twitch login URL.
      2. Open that URL in a browser on any device and log in as usual (username, password, and 2FA if enabled).
      3. Once you are redirected, copy the **full address** of the page you landed on - it contains `#access_token=...`.
-     4. Hand that address over to the miner, either by writing it into the container:
+     4. Paste that address into the container's console and press Enter:
 
         ```sh
-        docker exec -it twitch_drops_miner sh -c 'cat > /TwitchDropsMiner/login.url'
-        # paste the address, press Enter, then Ctrl+D
+        docker attach twitch_drops_miner
+        # paste the address, press Enter
+        # detach again with Ctrl+P, Ctrl+Q
         ```
 
-        or, if you bind-mount the application folder, by putting the address into a `login.url` file in the same directory as `cookies.jar`.
+     The miner takes the address right away and stores the resulting session in `cookies.jar`, which is restored on every subsequent start - so this is a one-time step per session.
 
-     The miner picks the file up within a second and deletes it again. The resulting session is stored in `cookies.jar`, which is restored on every subsequent start - so this is a one-time step per session.
+     Stdin is only read while the miner is actually waiting for a login, so a container that already has a working `cookies.jar` needs neither `-i` nor an attached terminal: it starts and mines as usual.
+
+     > **NOTE**: For the initial login the container needs stdin enabled (`-i`, as in `docker run -itd`). When using Compose, add `stdin_open: true` (and optionally `tty: true`) to the service - it doesn't affect anything else.
 
   - **Docker Considerations:** If you are running the application in Docker, remember to shut down the container before making changes directly to the `settings.json` file.
 
