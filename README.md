@@ -1,5 +1,12 @@
 # Twitch Drops Miner -- Docker
 
+> [!IMPORTANT]
+> ## This fork is no longer maintained
+>
+> Thanks for stopping by, and thank you to everyone who used, tested, and reported issues on this fork.
+>
+> I've moved on to a different drops miner, **[GrubDrops](https://github.com/aalejandrofer/GrubDrops)**, and I'm no longer maintaining this repository. It will receive no further updates, fixes, or support, so Twitch-side changes may eventually break it.
+
 Thanks to @DevilXD and other contributors from the [original repo](https://github.com/DevilXD/TwitchDropsMiner) for the vast majority of the code.
 
 This application allows you to AFK mine timed Twitch drops, without having to worry about switching channels when the one you were watching goes offline, claiming the drops, or even receiving the stream data itself. This helps you save on bandwidth and hassle.
